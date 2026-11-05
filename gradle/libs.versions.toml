@@ -4,6 +4,8 @@ spring-boot = "4.1.2"
 [libraries]
 # Spring Boot 버전표(BOM): 아래 버전 없는 라이브러리들의 버전을 여기서 정해줌
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
+spring-boot-test    = { module = "org.springframework.boot:spring-boot-starter-test" }
 
 spring-webmvc  = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
 spring-kafka   = { module = "org.springframework.boot:spring-boot-starter-kafka" }
