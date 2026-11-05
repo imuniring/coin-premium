@@ -6,6 +6,16 @@ spring:
       enabled: true      # Virtual Threads 사용
   main:
     keep-alive: true     # 웹 서버 없이도 앱이 종료되지 않게 유지
+  kafka:
+    bootstrap-servers: localhost:19092   # docker-compose에서 바꾼 포트
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      acks: all                          # 브로커가 확실히 저장했을 때만 성공
+      properties:
+        enable.idempotence: true         # 재전송해도 중복 저장 안 되게
+        linger.ms: 5                     # 5ms 모아서 한 번에 전송 (처리량 ↑)
+        spring.json.add.type.headers: false   # 클래스 정보를 헤더에 안 넣음 (서비스 간 결합 ↓)
 
 exchange:
   upbit:
