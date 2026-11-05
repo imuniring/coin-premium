@@ -1,0 +1,17 @@
+[versions]
+spring-boot = "4.1.2"
+
+[libraries]
+# Spring Boot 버전표(BOM): 아래 버전 없는 라이브러리들의 버전을 여기서 정해줌
+spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+
+spring-webmvc  = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-kafka   = { module = "org.springframework.boot:spring-boot-starter-kafka" }
+mariadb        = { module = "org.mariadb.jdbc:mariadb-java-client" }
+
+# 공통 테스트
+junit-jupiter  = { module = "org.junit.jupiter:junit-jupiter" }
+junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }

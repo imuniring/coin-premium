@@ -1,29 +1,38 @@
 plugins {
-    java
-    id("org.springframework.boot") version "4.1.2"
-    id("io.spring.dependency-management") version "1.1.7"
+    // Spring Boot 플러그인은 "선언만" 하고 루트엔 적용 안 함
+    // → 서비스 모듈에서 alias(libs.plugins.spring.boot)로 버전 없이 적용
+    alias(libs.plugins.spring.boot) apply false
 }
 
-group = "com.uni"
-version = "0.0.1-SNAPSHOT"
-description = "coin-premium"
+// 모든 하위 모듈(event-contract, collector, premium)에 공통 적용
+subprojects {
+    apply(plugin = "java")
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+    group = "com.uni"
+    version = "0.0.1-SNAPSHOT"
+
+    // 모든 모듈 Java 21
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
     }
-}
 
-repositories {
-    mavenCentral()
-}
+    repositories {
+        mavenCentral()
+    }
 
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
+    dependencies {
+        // 버전은 Spring Boot BOM에 위임 (dependency-management 플러그인 대체)
+        "implementation"(platform(rootProject.libs.spring.boot.bom))
+        "testImplementation"(platform(rootProject.libs.spring.boot.bom))
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+        // 공통 테스트 기반
+        "testImplementation"(rootProject.libs.junit.jupiter)
+        "testRuntimeOnly"(rootProject.libs.junit.launcher)
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
 }
