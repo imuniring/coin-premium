@@ -1,5 +1,6 @@
 package com.uni.coinpremium.collector.adapter.out.koreaexim;
 
+import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetchException;
 import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetcher;
 import com.uni.coinpremium.contract.ExchangeRateEvent;
 import org.springframework.stereotype.Component;
@@ -44,17 +45,22 @@ public class KoreaEximClient implements ExchangeRateFetcher {
                 .build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                throw new IllegalStateException("koreaexim http status=" + response.statusCode());
+            int status = response.statusCode();
+            if (status >= 500) {
+                throw new ExchangeRateFetchException("koreaexim server error status=" + status, true);    // 서버 문제 → 재시도
+            }
+            if (status != 200) {
+                throw new ExchangeRateFetchException("koreaexim http status=" + status, false);   // 요청 문제 → 재시도 무의미
             }
             KoreaEximRate[] rates = jsonMapper.readValue(response.body(), KoreaEximRate[].class);
             return KoreaEximRateMapper.toUsdKrw(rates, date, Instant.now());
 
         } catch (IOException e) {
-            throw new IllegalStateException("koreaexim request failed: " + e.getMessage(), e);
+            // 타임아웃(HttpTimeoutException 포함), 네트워크 끊김 → 일시적
+            throw new ExchangeRateFetchException("koreaexim request failed: " + e.getMessage(), e, true);
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();   // 인터럽트 상태 복구 (스레드 종료 신호를 삼키지 않음)
-            throw new IllegalStateException("koreaexim request interrupted", e);
+            Thread.currentThread().interrupt();
+            throw new ExchangeRateFetchException("koreaexim request interrupted", e, false);
         }
     }
 

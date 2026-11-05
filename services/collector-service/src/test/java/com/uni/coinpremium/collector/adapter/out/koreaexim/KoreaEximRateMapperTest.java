@@ -1,5 +1,6 @@
 package com.uni.coinpremium.collector.adapter.out.koreaexim;
 
+import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetchException;
 import com.uni.coinpremium.contract.ExchangeRateEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,7 @@ class KoreaEximRateMapperTest {
     void errorResult() {
         KoreaEximRate[] rates = { new KoreaEximRate(3, null, null) };   // 3 = 인증코드 오류
 
-        assertThrows(IllegalStateException.class,
+        assertThrows(ExchangeRateFetchException.class,
                 () -> KoreaEximRateMapper.toUsdKrw(rates, DATE, RECEIVED_AT));
     }
 }
