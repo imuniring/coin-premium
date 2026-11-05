@@ -16,6 +16,9 @@ spring:
         enable.idempotence: true         # 재전송해도 중복 저장 안 되게
         linger.ms: 5                     # 5ms 모아서 한 번에 전송 (처리량 ↑)
         spring.json.add.type.headers: false   # 클래스 정보를 헤더에 안 넣음 (서비스 간 결합 ↓)
+  config:
+    # 루트의 .env를 설정값으로 읽어옴 (실행 위치에 따라 경로가 달라서 두 개 지정)
+    import: "optional:file:.env[.properties],optional:file:../../.env[.properties]"
 
 exchange:
   upbit:
@@ -28,6 +31,9 @@ exchange:
     symbols:
       - BTCUSDT
       - ETHUSDT
+  koreaexim:
+    url: https://oapi.koreaexim.go.kr/site/program/financial/exchangeJSON
+    api-key: ${KOREAEXIM_API_KEY}
 
 logging:
   level:
