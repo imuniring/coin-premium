@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: collector-service
+  threads:
+    virtual:
+      enabled: true      # Virtual Threads 사용
+  main:
+    keep-alive: true     # 웹 서버 없이도 앱이 종료되지 않게 유지
