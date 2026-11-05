@@ -13,3 +13,8 @@ exchange:
     codes:
       - KRW-BTC
       - KRW-ETH
+  binance:
+    url: wss://data-stream.binance.vision   # 시세 전용 엔드포인트
+    symbols:
+      - BTCUSDT
+      - ETHUSDT
