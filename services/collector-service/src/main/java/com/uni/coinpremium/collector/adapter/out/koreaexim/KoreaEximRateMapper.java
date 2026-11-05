@@ -1,5 +1,6 @@
 package com.uni.coinpremium.collector.adapter.out.koreaexim;
 
+import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetchException;
 import com.uni.coinpremium.contract.ExchangeRateEvent;
 import com.uni.coinpremium.contract.FiatCurrency;
 import com.uni.coinpremium.contract.RateSource;
@@ -30,13 +31,13 @@ final class KoreaEximRateMapper {
         // 오류 응답은 result 코드로 옴 (인증 실패, 일일 제한 초과 등)
         Integer result = rates[0].result();
         if (result == null || result != 1) {
-            throw new IllegalStateException("koreaexim error result=" + result);
+            throw new ExchangeRateFetchException("koreaexim error result=" + result, false);
         }
 
         KoreaEximRate usd = Arrays.stream(rates)
                 .filter(r -> "USD".equals(r.curUnit()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("USD rate not found"));
+                .orElseThrow(() -> new ExchangeRateFetchException("USD rate not found", false));
 
         BigDecimal rate = new BigDecimal(usd.dealBasR().replace(",", ""));   // "1,369.4" → 1369.4
 

@@ -19,4 +19,12 @@ public class KafkaTopicConfig {
                 .replicas(1)   // 로컬 브로커 1대
                 .build();
     }
+
+    @Bean
+    public NewTopic exchangeRateTopic() {
+        return TopicBuilder.name(Topics.EXCHANGE_RATE)
+                .partitions(1)   // 환율은 1종류라 파티션 하나로 순서 보장
+                .replicas(1)
+                .build();
+    }
 }
