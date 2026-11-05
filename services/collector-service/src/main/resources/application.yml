@@ -6,3 +6,10 @@ spring:
       enabled: true      # Virtual Threads 사용
   main:
     keep-alive: true     # 웹 서버 없이도 앱이 종료되지 않게 유지
+
+exchange:
+  upbit:
+    url: wss://api.upbit.com/websocket/v1
+    codes:
+      - KRW-BTC
+      - KRW-ETH
