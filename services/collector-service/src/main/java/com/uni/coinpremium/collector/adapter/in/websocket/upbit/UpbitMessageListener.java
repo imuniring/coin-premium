@@ -1,12 +1,15 @@
 package com.uni.coinpremium.collector.adapter.in.websocket.upbit;
 
+import com.uni.coinpremium.collector.application.port.out.TickerPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.ByteArrayOutputStream;
 import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -18,11 +21,16 @@ class UpbitMessageListener implements WebSocket.Listener {
     private static final Logger log = LoggerFactory.getLogger(UpbitMessageListener.class);
 
     private final String subscribeMessage;
+    private final JsonMapper jsonMapper;          // tools.jackson.databind.json.JsonMapper
+    private final TickerPublisher publisher;
+
     private final StringBuilder textBuffer = new StringBuilder();
     private final ByteArrayOutputStream binaryBuffer = new ByteArrayOutputStream();
 
-    UpbitMessageListener(String subscribeMessage) {
+    UpbitMessageListener(String subscribeMessage, JsonMapper jsonMapper, TickerPublisher publisher) {
         this.subscribeMessage = subscribeMessage;
+        this.jsonMapper = jsonMapper;
+        this.publisher = publisher;
     }
 
     @Override
@@ -70,6 +78,16 @@ class UpbitMessageListener implements WebSocket.Listener {
     }
 
     private void handle(String message) {
-        log.info("[upbit] 수신: {}", message);   // 지금은 찍어보기만
+        Instant receivedAt = Instant.now();   // 받은 순간 기록
+        try {
+            UpbitTradeMessage msg = jsonMapper.readValue(message, UpbitTradeMessage.class);
+            if (!msg.isTrade()) {
+                return;   // {"status":"UP"} 같은 체결 외 메시지는 무시
+            }
+            publisher.publish(UpbitTradeMapper.toEvent(msg, receivedAt));
+        } catch (Exception e) {
+            // 불량 메시지 1건은 버리고, 연결은 계속 유지
+            log.warn("[upbit] 메시지 변환 실패 - message={}", message, e);
+        }
     }
 }

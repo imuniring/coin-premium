@@ -7,6 +7,7 @@ spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies"
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
 spring-boot-test    = { module = "org.springframework.boot:spring-boot-starter-test" }
 
+spring-jackson = { module = "org.springframework.boot:spring-boot-starter-jackson" }
 spring-webmvc  = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
 spring-kafka   = { module = "org.springframework.boot:spring-boot-starter-kafka" }
 mariadb        = { module = "org.mariadb.jdbc:mariadb-java-client" }
