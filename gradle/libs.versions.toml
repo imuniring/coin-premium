@@ -1,0 +1,10 @@
+[versions]
+spring-boot = "4.1.2"
+
+[libraries]
+spring-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-kafka  = { module = "org.springframework.boot:spring-boot-starter-kafka" }
+mariadb       = { module = "org.mariadb.jdbc:mariadb-java-client" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
