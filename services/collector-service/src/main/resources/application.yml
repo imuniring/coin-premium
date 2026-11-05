@@ -18,3 +18,7 @@ exchange:
     symbols:
       - BTCUSDT
       - ETHUSDT
+
+logging:
+  level:
+    com.uni.coinpremium.collector.adapter.out.log: WARN   # 테스트 중에만 publish 로그 숨김
