@@ -51,5 +51,17 @@ services:
       timeout: 10s
       retries: 5
 
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:v1.3.0
+    container_name: coin-kafka-ui
+    ports:
+      - "8089:8080"                          # 다른 프로젝트 kafka-ui와 겹치지 않게 8089
+    environment:
+      KAFKA_CLUSTERS_0_NAME: coin-premium-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092   # 컨테이너끼리는 INTERNAL 리스너
+    depends_on:
+      kafka:
+        condition: service_healthy           # Kafka가 준비된 뒤에 시작
+
 volumes:
   mariadb-data:
