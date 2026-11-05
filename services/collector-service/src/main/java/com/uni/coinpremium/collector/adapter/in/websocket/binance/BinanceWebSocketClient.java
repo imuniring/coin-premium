@@ -1,30 +1,22 @@
 package com.uni.coinpremium.collector.adapter.in.websocket.binance;
 
+import com.uni.coinpremium.collector.adapter.in.websocket.ExchangeWebSocketClient;
 import com.uni.coinpremium.collector.application.port.out.TickerPublisher;
-import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.net.http.HttpClient;
-import java.net.http.WebSocket;
+import java.net.URI;
+import java.time.Instant;
 
 /**
- * Binance WebSocket 연결 관리
+ * Binance 체결 수신 (URL로 구독하므로 구독 메시지 없음)
  */
 @Component
-public class BinanceWebSocketClient {
-
-    private static final Logger log = LoggerFactory.getLogger(BinanceWebSocketClient.class);
+public class BinanceWebSocketClient extends ExchangeWebSocketClient {
 
     private final BinanceProperties properties;
     private final JsonMapper jsonMapper;
     private final TickerPublisher publisher;
-    private final HttpClient httpClient = HttpClient.newHttpClient();
-    private volatile WebSocket webSocket;
 
     public BinanceWebSocketClient(BinanceProperties properties, JsonMapper jsonMapper, TickerPublisher publisher) {
         this.properties = properties;
@@ -32,22 +24,22 @@ public class BinanceWebSocketClient {
         this.publisher = publisher;
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void connect() {
-        log.info("[binance] 연결 시도: {}", properties.streamUri());
-        httpClient.newWebSocketBuilder()
-                .buildAsync(properties.streamUri(), new BinanceMessageListener(jsonMapper, publisher))
-                .thenAccept(ws -> this.webSocket = ws)
-                .exceptionally(e -> {
-                    log.error("[binance] 연결 실패", e);
-                    return null;
-                });
+    @Override
+    protected String name() {
+        return "binance";
     }
 
-    @PreDestroy
-    public void close() {
-        if (webSocket != null) {
-            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "shutdown");
+    @Override
+    protected URI uri() {
+        return properties.streamUri();
+    }
+
+    @Override
+    protected void onMessage(String message, Instant receivedAt) {
+        BinanceStreamMessage msg = jsonMapper.readValue(message, BinanceStreamMessage.class);
+        if (msg.data() == null || !msg.data().isTrade()) {
+            return;
         }
+        publisher.publish(BinanceTradeMapper.toEvent(msg.data(), receivedAt));
     }
 }
