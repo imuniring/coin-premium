@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: premium-service
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 8081   # 8080은 다른 프로젝트 kafka-ui가 사용 중
