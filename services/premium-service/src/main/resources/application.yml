@@ -4,6 +4,12 @@ spring:
   threads:
     virtual:
       enabled: true
+  kafka:
+    bootstrap-servers: localhost:19092
+    consumer:
+      group-id: premium-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer   # 문자열로 받아서 직접 변환
 
 server:
   port: 8081   # 8080은 다른 프로젝트 kafka-ui가 사용 중
