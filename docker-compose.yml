@@ -3,7 +3,7 @@ services:
     image: mariadb:11.8                # 버전 고정 (LTS)
     container_name: coin-mariadb
     ports:
-      - "3307:3306"                   # 호스트 3306은 로컬 MySQL이 사용 중
+      - "127.0.0.1:3307:3306"
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${MARIADB_DATABASE}
@@ -25,7 +25,7 @@ services:
     image: apache/kafka:4.1.0          # KRaft 모드 (ZooKeeper 없음)
     container_name: coin-kafka
     ports:
-      - "19092:19092"                 # 호스트 9092는 다른 프로젝트 kafka1이 사용 중
+      - "127.0.0.1:19092:19092"                 # 호스트 9092는 다른 프로젝트 kafka1이 사용 중
     environment:
       # 이 노드가 브로커 + 컨트롤러를 둘 다 맡음 (로컬 단일 노드)
       KAFKA_NODE_ID: 1
@@ -55,7 +55,7 @@ services:
     image: ghcr.io/kafbat/kafka-ui:v1.3.0
     container_name: coin-kafka-ui
     ports:
-      - "8089:8080"                          # 다른 프로젝트 kafka-ui와 겹치지 않게 8089
+      - "127.0.0.1:8089:8080"                          # 다른 프로젝트 kafka-ui와 겹치지 않게 8089
     environment:
       KAFKA_CLUSTERS_0_NAME: coin-premium-local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092   # 컨테이너끼리는 INTERNAL 리스너
