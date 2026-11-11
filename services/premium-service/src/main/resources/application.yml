@@ -13,6 +13,14 @@ spring:
   mvc: # ← 추가
     problemdetails:
       enabled: true
+  config:
+    import: "optional:file:.env[.properties],optional:file:../../.env[.properties]"
+  datasource:
+    url: jdbc:mariadb://localhost:3307/${MARIADB_DATABASE}
+    username: ${MARIADB_USER}
+    password: ${MARIADB_PASSWORD}
+  jooq:
+    sql-dialect: MARIADB
 
 server:
   port: 8081   # 8080은 다른 프로젝트 kafka-ui가 사용 중
