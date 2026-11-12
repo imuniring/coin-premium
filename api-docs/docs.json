@@ -1,0 +1,25 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "coin-premium",
+  "colors": {
+    "primary": "#2563EB"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "가이드",
+        "groups": [
+          {
+            "group": "시작하기",
+            "pages": ["index", "quickstart", "errors", "changelog"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": "openapi.json"
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+---
+title: "시작하기"
+---
+
+## 현재 김프 조회
+```bash
+curl https://<API 주소>/v1/coins/BTC/premium
+```
+
+## 최근 하루 김프 추이 (1시간 캔들)
+```bash
+curl "https://<API 주소>/v1/coins/BTC/premium/history?interval=1h"
+```
+
+## 응답이 503이라면
+서비스 기동 직후에는 시세·환율이 모이기 전이라 `503`과 `Retry-After` 헤더가 반환됩니다.
+헤더의 초만큼 기다린 뒤 다시 요청하세요.

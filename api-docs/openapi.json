@@ -1,0 +1,234 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "coin-premium API",
+    "description": "국내·해외 거래소 실시간 시세와 공식 환율로 계산한 김치프리미엄 조회 API.\n시각은 ISO-8601 UTC, 에러는 ProblemDetail(RFC 9457) 형식이며 `code`로 구분한다.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8081",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Premium",
+      "description": "김치프리미엄 조회"
+    }
+  ],
+  "paths": {
+    "/v1/coins/{symbol}/premium": {
+      "get": {
+        "tags": [
+          "Premium"
+        ],
+        "summary": "현재 김프 조회",
+        "description": "국내(Upbit) 최신 체결가, 해외(Binance) 최신 체결가, 최신 환율로 계산한 현재 김프. 기동 직후 데이터가 준비되지 않았으면 503과 Retry-After를 반환한다.",
+        "operationId": "getPremium",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "description": "코인 심볼 (대소문자 무관)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "BTC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PremiumResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/coins/{symbol}/premium/history": {
+      "get": {
+        "tags": [
+          "Premium"
+        ],
+        "summary": "김프 추이 조회",
+        "description": "1분 스냅샷을 구간별 캔들(시가·고가·저가·종가·평균·개수)로 집계한다. 범위는 [from, to), 1d는 KST 자정 기준. 최대 기간: 1m 1일, 1h 31일, 1d 366일.",
+        "operationId": "getHistory",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "description": "코인 심볼",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "BTC"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "시작 시각 (포함, UTC). 생략 시 to - 1일",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2026-11-11T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "종료 시각 (미포함, UTC). 생략 시 현재",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2026-11-12T00:00:00Z"
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "description": "구간 간격: 1m, 1h, 1d",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "1h"
+            },
+            "example": "1h"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PremiumHistoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Fx": {
+        "type": "object",
+        "properties": {
+          "rate": {
+            "type": "number"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Market": {
+        "type": "object",
+        "properties": {
+          "exchange": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "tradedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PremiumResponse": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "premiumRate": {
+            "type": "number"
+          },
+          "domestic": {
+            "$ref": "#/components/schemas/Market"
+          },
+          "foreign": {
+            "$ref": "#/components/schemas/Market"
+          },
+          "exchangeRate": {
+            "$ref": "#/components/schemas/Fx"
+          },
+          "foreignPriceKrw": {
+            "type": "number"
+          },
+          "calculatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "open": {
+            "type": "number"
+          },
+          "high": {
+            "type": "number"
+          },
+          "low": {
+            "type": "number"
+          },
+          "close": {
+            "type": "number"
+          },
+          "avg": {
+            "type": "number"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PremiumHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        }
+      }
+    }
+  }
+}
