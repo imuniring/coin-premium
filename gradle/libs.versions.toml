@@ -19,6 +19,10 @@ flyway-mysql   = { module = "org.flywaydb:flyway-mysql" }
 
 jooq-meta-extensions = { module = "org.jooq:jooq-meta-extensions", version.ref = "jooq" }
 
+spring-boot-testcontainers  = { module = "org.springframework.boot:spring-boot-testcontainers" }
+testcontainers-junit        = { module = "org.testcontainers:testcontainers-junit-jupiter" }
+testcontainers-mariadb      = { module = "org.testcontainers:testcontainers-mariadb" }
+testcontainers-kafka        = { module = "org.testcontainers:testcontainers-kafka" }
 
 # 공통 테스트
 junit-jupiter  = { module = "org.junit.jupiter:junit-jupiter" }

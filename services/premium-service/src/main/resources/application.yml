@@ -16,9 +16,9 @@ spring:
   config:
     import: "optional:file:.env[.properties],optional:file:../../.env[.properties]"
   datasource:
-    url: jdbc:mariadb://localhost:3307/${MARIADB_DATABASE}
-    username: ${MARIADB_USER}
-    password: ${MARIADB_PASSWORD}
+    url: jdbc:mariadb://localhost:3307/${MARIADB_DATABASE:coin_premium}
+    username: ${MARIADB_USER:coin}
+    password: ${MARIADB_PASSWORD:}
   jooq:
     sql-dialect: MARIADB
 

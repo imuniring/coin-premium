@@ -17,6 +17,10 @@ dependencies {
     jooqCodegen(libs.jooq.meta.extensions)
 
     testImplementation(libs.spring.boot.test)
+    testImplementation(libs.spring.boot.testcontainers)
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.mariadb)
+    testImplementation(libs.testcontainers.kafka)
 }
 
 // jOOQ 코드 생성: Flyway SQL 파일을 읽어서 Java 코드 생성 (DB 접속 불필요)
