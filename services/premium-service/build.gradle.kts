@@ -14,6 +14,8 @@ dependencies {
     implementation(libs.flyway.mysql)
     runtimeOnly(libs.mariadb)
 
+    implementation(libs.springdoc)
+
     jooqCodegen(libs.jooq.meta.extensions)
 
     testImplementation(libs.spring.boot.test)
