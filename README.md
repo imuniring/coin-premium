@@ -71,7 +71,7 @@ docker compose ps   # 모두 healthy / Up 확인
 
 ### 4. 확인
 ```bash
-curl -s "localhost:8081/premium?symbol=BTC"
+curl -s "localhost:8081/v1/coins/BTC/premium"
 ```
 - 김프 이력은 `premium_snapshot` 테이블에 매 분 저장됩니다.
 - 기동 직후 데이터가 모이기 전에는 503 + `Retry-After`가 응답됩니다.
