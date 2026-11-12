@@ -17,12 +17,23 @@ flowchart LR
     K --> PRE[premium-service]
     PRE -->|최신 시세·환율| MEM[(메모리)]
     PRE -->|1분 스냅샷| DB[(MariaDB)]
-    USER[사용자] -->|GET /premium| PRE
+    USER[사용자] -->|GET /v1/coins/BTC/premium| PRE
 ```
 
 - 서비스 간 통신은 Kafka 비동기가 기본이며, 서비스끼리 직접 호출하지 않습니다.
 - 서비스 내부는 헥사고날(포트·어댑터) 구조이며, ArchUnit 테스트로 의존 규칙을 강제합니다.
 - 자세한 내용: [아키텍처 개요](docs/architecture/overview.md), [이벤트 명세](docs/events.md)
+
+## API
+
+| 메서드 | 경로 | 설명 |
+| --- | --- | --- |
+| GET | `/v1/coins/{symbol}/premium` | 현재 김프 (국내·해외 최신 체결가 + 최신 환율) |
+| GET | `/v1/coins/{symbol}/premium/history?from=&to=&interval=` | 김프 추이 캔들 (1m·1h·1d, 1d는 KST 자정 기준) |
+
+- 에러는 ProblemDetail(RFC 9457) 형식이며 `code`로 구분합니다 (`INVALID_SYMBOL`, `UNSUPPORTED_SYMBOL`, `MARKET_DATA_NOT_READY` 등)
+- 📘 **API 문서 (Mintlify)**: https://uni-5277cc74.mintlify.site
+- 로컬 Swagger UI: http://localhost:8081/swagger-ui.html
 
 ## 기술 스택
 
@@ -35,6 +46,7 @@ flowchart LR
 | 수집 | JDK HttpClient WebSocket·REST | 데이터 공백 REST 보정 |
 | 안정성 | 자동 재연결(백오프+지터), 좀비 연결 감지, 재시도 분류 | Resilience4j, Toxiproxy |
 | 테스트 | JUnit 5, Testcontainers 2, ArchUnit | 장애 주입 테스트 |
+| API 문서 | springdoc-openapi 3, Mintlify | CI에서 openapi.json 자동 갱신 |
 | 인프라 | Docker Compose, kafbat UI | K8s(kind), ArgoCD, GitHub Actions, Terraform + AWS |
 | 관측 | - | OpenTelemetry, Grafana |
 
@@ -72,6 +84,7 @@ docker compose ps   # 모두 healthy / Up 확인
 ### 4. 확인
 ```bash
 curl -s "localhost:8081/v1/coins/BTC/premium"
+curl -s "localhost:8081/v1/coins/BTC/premium/history?interval=1h"
 ```
 - 김프 이력은 `premium_snapshot` 테이블에 매 분 저장됩니다.
 - 기동 직후 데이터가 모이기 전에는 503 + `Retry-After`가 응답됩니다.
@@ -99,7 +112,8 @@ coin-premium/
 ├── common/event-contract/      # 서비스 간 이벤트 계약 (순수 Java)
 ├── services/collector-service/ # 거래소·환율 수집 → Kafka 발행
 ├── services/premium-service/   # 김프 계산·조회 API·1분 스냅샷 저장
-└── docs/                       # ADR, 트러블슈팅, 아키텍처
+├── docs/                       # 개발 문서: ADR, 트러블슈팅, 아키텍처
+└── api-docs/                   # API 사용자 문서 (Mintlify)
 ```
 
 ## 진행 현황
@@ -111,9 +125,12 @@ coin-premium/
 - [x] Kafka 발행·구독
 - [x] premium-service: 김프 계산 도메인, 조회 API(ProblemDetail), 1분 스냅샷 저장(Flyway + jOOQ)
 - [x] Testcontainers 통합 테스트, ArchUnit 구조 규칙
-- [ ] RESTful API 정리 (`/v1/coins/{symbol}/premium`), 김프 추이 API
-- [ ] Mintlify API 문서, PR AI 코드 리뷰
-- [ ] 2단계 안정성 (Resilience4j, Redis, 데이터 공백 보정, Feature Flag)
+- [x] RESTful API 정리 (`/v1/coins/{symbol}/premium`), 김프 추이 API, 에러 응답 표준화
+- [x] springdoc OpenAPI, Mintlify API 문서
+- [ ] PR AI 코드 리뷰 (6단계 CI와 함께 검토)
+- [ ] 2단계 안정성 (Resilience4j, Redis, 데이터 공백 보정, Feature Flag, 코인 확장)
+
+> **v0.1.0** — 1단계 MVP 완료: 수집 → Kafka → 계산 → 조회·이력 파이프라인
 
 ## 문서
 
@@ -121,3 +138,4 @@ coin-premium/
 - [트러블슈팅](docs/troubleshooting/README.md)
 - [아키텍처 개요](docs/architecture/overview.md)
 - [이벤트 명세](docs/events.md)
+- [API 문서 (Mintlify)](https://uni-5277cc74.mintlify.site)

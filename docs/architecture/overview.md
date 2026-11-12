@@ -28,7 +28,7 @@ sequenceDiagram
         COL->>K: market.exchange-rate.v1 (key = USD-KRW, 동기)
     end
     K->>PRE: 구독 → 최신 시세·환율을 메모리에 보관
-    Note over PRE: GET /premium 요청 시 메모리 값으로 즉시 계산
+    Note over PRE: GET /v1/coins/{symbol}/premium 요청 시 메모리 값으로 즉시 계산
     loop 매 분 0초
         PRE->>DB: 코인별 김프 스냅샷 INSERT IGNORE (UTC)
     end
@@ -38,17 +38,18 @@ sequenceDiagram
 
 ```
 premium/
-├── domain/              KimchiPremium, PriceQuote, FxRate (순수 Java)
+├── domain/              KimchiPremium, PriceQuote, FxRate, PremiumCandle, HistoryInterval (순수 Java)
 ├── application/
-│   ├── port/out/        MarketDataRepository, PremiumSnapshotRepository
-│   ├── service/         PremiumQueryService, PremiumSnapshotService
-│   └── exception/       UnsupportedSymbolException(404), MarketDataNotReadyException(503)
+│   ├── port/out/        MarketDataRepository, PremiumSnapshotRepository, PremiumHistoryRepository
+│   ├── service/         PremiumQueryService, PremiumSnapshotService, PremiumHistoryService
+│   └── exception/       비즈니스 예외: UnsupportedSymbol, MarketDataNotReady, InvalidHistoryRange
 ├── adapter/
 │   ├── in/kafka/        MarketDataKafkaListener
-│   ├── in/web/          PremiumController, PremiumExceptionHandler
+│   ├── in/web/          PremiumController, PremiumExceptionHandler, ErrorCode,
+│   │                    HTTP 입력 예외: InvalidSymbol, InvalidInterval
 │   ├── in/scheduler/    PremiumSnapshotScheduler
 │   ├── out/memory/      InMemoryMarketDataRepository (ConcurrentHashMap)
-│   └── out/persistence/ JooqPremiumSnapshotRepository
+│   └── out/persistence/ JooqPremiumSnapshotRepository, JooqPremiumHistoryRepository
 └── config/              PremiumProperties, ClockConfig
 ```
 
@@ -57,8 +58,19 @@ premium/
 1. Kafka → Listener → 메모리 저장소 (최신값 덮어쓰기)
 2. API 요청 → PremiumQueryService → 김프 계산 → 응답 (저장하지 않음)
 3. 매 분 → PremiumSnapshotService → 같은 PremiumQueryService로 계산 → DB 저장
+4. 이력 요청 → PremiumHistoryService → jOOQ 집계(윈도우 함수) → 캔들 응답
 
 조회 API와 스냅샷이 같은 서비스를 재사용하므로 두 값의 계산 규칙이 항상 같다.
+
+### 예외 배치 기준
+"HTTP 없이도 생길 수 있는가?"로 나눈다.
+
+| 위치 | 예외 | 예 |
+| --- | --- | --- |
+| application/exception | 비즈니스 규칙 위반 (스케줄러 등 다른 입구에서도 발생) | 미지원 코인, 데이터 준비 전, 기간 초과 |
+| adapter/in/web | HTTP 문자열 입력 형식 오류 (package-private) | 심볼 형식, interval 문자열 |
+
+HTTP 상태 코드와 ProblemDetail 변환은 모두 `PremiumExceptionHandler`가 담당하며, application 예외는 HTTP를 모른다.
 
 ## collector-service 내부 구조 (헥사고날)
 

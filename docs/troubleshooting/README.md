@@ -14,6 +14,8 @@
 | [010](010-bigdecimal-double-constructor.md) | `new BigDecimal(double)`로 오차 유입 | 금액 정밀도 |
 | [011](011-gradle-jvm-vs-toolchain.md) | jOOQ 플러그인이 "JVM 21 이상 필요"로 실패 | 빌드 |
 | [012](012-fetchone-test-isolation.md) | 통합 테스트의 fetchOne 유일성과 테스트 독립성 | 테스트 |
+| [013](013-zsh-exclamation.md) | 커밋 메시지의 `!` 때문에 zsh 에러 | 개발 환경 |
+| [014](014-requestparam-vs-pathvariable.md) | 경로 변수를 `@RequestParam`으로 받음 | 코드 |
 
 ## 템플릿
 

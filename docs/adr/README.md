@@ -17,6 +17,8 @@
 | [0011](0011-premium-query-design.md) | premium-service 조회 설계 (메모리 최신값 + 요청 시 계산) | 채택 |
 | [0012](0012-premium-snapshot.md) | 1분 단위 김프 스냅샷 저장 | 채택 |
 | [0013](0013-test-strategy.md) | 테스트 전략: Testcontainers + ArchUnit | 채택 |
+| [0014](0014-premium-history-api.md) | 김프 추이 API (김프 캔들) | 채택 |
+| [0015](0015-error-response.md) | 에러 응답 설계 (ProblemDetail + code) | 채택 |
 
 ## 템플릿
 
