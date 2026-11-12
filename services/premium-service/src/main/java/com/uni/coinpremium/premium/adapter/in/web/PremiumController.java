@@ -1,11 +1,11 @@
 package com.uni.coinpremium.premium.adapter.in.web;
 
+import com.uni.coinpremium.premium.application.service.PremiumHistoryService;
 import com.uni.coinpremium.premium.application.service.PremiumQueryService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.uni.coinpremium.premium.domain.HistoryInterval;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -20,15 +20,27 @@ public class PremiumController {
     private static final Pattern SYMBOL_FORMAT = Pattern.compile("^[A-Z0-9]{1,20}$");
 
     private final PremiumQueryService queryService;
+    private final PremiumHistoryService historyService;
 
-    public PremiumController(PremiumQueryService queryService) {
+    public PremiumController(PremiumQueryService queryService, PremiumHistoryService historyService) {
         this.queryService = queryService;
+        this.historyService = historyService;
     }
 
     // GET /v1/coins/BTC/premium
     @GetMapping
     public PremiumResponse getPremium(@PathVariable String symbol) {
         return PremiumResponse.from(queryService.getPremium(normalize(symbol)));
+    }
+
+    // GET /v1/coins/BTC/premium/history?from=2026-11-11T00:00:00Z&to=2026-11-12T00:00:00Z&interval=1h
+    @GetMapping("/history")
+    public PremiumHistoryResponse getHistory(@PathVariable String symbol,
+                                             @RequestParam(required = false) Instant from,
+                                             @RequestParam(required = false) Instant to,
+                                             @RequestParam(defaultValue = "1h") String interval) {
+        HistoryInterval parsed = HistoryInterval.fromCode(interval).orElseThrow(InvalidIntervalException::new);
+        return PremiumHistoryResponse.from(historyService.getHistory(normalize(symbol), parsed, from, to));
     }
 
     // " btc " → "BTC", 형식이 틀리면 400 (입력값은 응답에 넣지 않음)

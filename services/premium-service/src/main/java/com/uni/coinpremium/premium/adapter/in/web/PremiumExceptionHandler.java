@@ -1,13 +1,14 @@
 package com.uni.coinpremium.premium.adapter.in.web;
 
+import com.uni.coinpremium.premium.application.exception.InvalidHistoryRangeException;
 import com.uni.coinpremium.premium.application.exception.MarketDataNotReadyException;
 import com.uni.coinpremium.premium.application.exception.UnsupportedSymbolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -37,6 +38,23 @@ public class PremiumExceptionHandler {
         return ResponseEntity.status(ErrorCode.MARKET_DATA_NOT_READY.status())
                 .header(HttpHeaders.RETRY_AFTER, "5")
                 .body(problem);
+    }
+
+    @ExceptionHandler(InvalidIntervalException.class)
+    public ProblemDetail handleInvalidInterval(InvalidIntervalException e) {
+        return problem(ErrorCode.INVALID_INTERVAL, e.getMessage());
+    }
+
+    @ExceptionHandler(InvalidHistoryRangeException.class)
+    public ProblemDetail handleInvalidRange(InvalidHistoryRangeException e) {
+        return problem(ErrorCode.INVALID_RANGE, e.getMessage());
+    }
+
+    // from=abc 처럼 형식이 틀린 파라미터 (입력값 대신 파라미터 이름만 알려줌)
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        return problem(ErrorCode.INVALID_PARAMETER,
+                e.getName() + " 형식이 올바르지 않습니다. (시각은 ISO-8601 UTC, 예: 2026-11-11T00:00:00Z)");
     }
 
     // 모든 에러 응답을 같은 모양으로
