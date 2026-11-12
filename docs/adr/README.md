@@ -6,14 +6,17 @@
 | --- | --- | --- |
 | [0001](0001-msa-monorepo.md) | MSA + 모노레포 구성 | 채택 |
 | [0002](0002-pragmatic-hexagonal.md) | 서비스 내부 실용적 헥사고날 | 채택 |
-| [0003](0003-jooq.md) | 쿼리 도구로 jOOQ 선택 | 채택 (도입 예정) |
-| [0004](0004-flyway.md) | 스키마 관리로 Flyway 선택 | 채택 (도입 예정) |
+| [0003](0003-jooq.md) | 쿼리 도구로 jOOQ 선택 (DDLDatabase 코드 생성) | 채택 |
+| [0004](0004-flyway.md) | 스키마 관리로 Flyway 선택 | 채택 |
 | [0005](0005-build-setup.md) | Spring Boot 4 · Version Catalog · BOM platform | 채택 |
 | [0006](0006-websocket-first.md) | 1단계부터 WebSocket 수집, JDK HttpClient 사용 | 채택 |
 | [0007](0007-kafka-key-and-topic.md) | Kafka 도입, 메시지 키 = 심볼 | 채택 |
 | [0008](0008-deterministic-event-id.md) | 결정적 eventId 설계 | 채택 |
 | [0009](0009-websocket-reconnect.md) | WebSocket 재연결·좀비 연결 감지 | 채택 |
 | [0010](0010-exchange-rate-collection.md) | 환율 수집 전략 | 채택 |
+| [0011](0011-premium-query-design.md) | premium-service 조회 설계 (메모리 최신값 + 요청 시 계산) | 채택 |
+| [0012](0012-premium-snapshot.md) | 1분 단위 김프 스냅샷 저장 | 채택 |
+| [0013](0013-test-strategy.md) | 테스트 전략: Testcontainers + ArchUnit | 채택 |
 
 ## 템플릿
 
