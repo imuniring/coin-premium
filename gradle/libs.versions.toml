@@ -2,6 +2,7 @@
 spring-boot = "4.1.2"
 jooq = "3.21.9"
 archunit = "1.5.1"
+springdoc = "3.0.3"
 
 [libraries]
 # Spring Boot 버전표(BOM): 아래 버전 없는 라이브러리들의 버전을 여기서 정해줌
@@ -30,6 +31,8 @@ junit-jupiter  = { module = "org.junit.jupiter:junit-jupiter" }
 junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 
 archunit = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+
+springdoc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
