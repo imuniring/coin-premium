@@ -11,7 +11,7 @@
 - Gradle Kotlin DSL + `gradle/libs.versions.toml` (Version Catalog)
 - `io.spring.dependency-management` 플러그인 대신 `platform(spring-boot-dependencies)`로 BOM 적용
 - 루트 `subprojects {}`에서 Java 툴체인·저장소·테스트 공통 설정
-- Gradle Wrapper 8.14.3 ([트러블슈팅 001](../troubleshooting/001-intellij-kotlin-dsl.md))
+- Gradle Wrapper 8.14.3 ([트러블슈팅 001](../troubleshooting/001-intellij-kotlin-dsl.md)), 데몬 JVM 21 고정 ([트러블슈팅 011](../troubleshooting/011-gradle-jvm-vs-toolchain.md))
 
 ## 이유
 - Spring Boot가 관리하는 라이브러리는 카탈로그에 버전을 적지 않아 Boot와 어긋날 일이 없음
