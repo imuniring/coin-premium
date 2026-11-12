@@ -1,0 +1,10 @@
+---
+title: "변경 이력"
+---
+
+<Update label="v0.1.0" description="2026-11">
+  - 현재 김프 조회 `GET /v1/coins/{symbol}/premium`
+  - 김프 추이 조회 `GET /v1/coins/{symbol}/premium/history` (1m·1h·1d 캔들)
+  - 에러 응답 표준화 (ProblemDetail + `code`)
+  - **Breaking**: `GET /premium?symbol=` 제거
+</Update>

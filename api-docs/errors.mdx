@@ -1,0 +1,25 @@
+---
+title: "에러 코드"
+---
+
+모든 에러는 ProblemDetail 형식이며, 클라이언트는 문구(`detail`)가 아닌 **`code`로 분기**해야 합니다.
+
+```json
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "symbol은 영문 대문자·숫자 1~20자여야 합니다.",
+  "instance": "/v1/coins/BTC!!/premium",
+  "code": "INVALID_SYMBOL"
+}
+```
+
+| code | status | 원인 | 조치 |
+| --- | --- | --- | --- |
+| `INVALID_SYMBOL` | 400 | 심볼이 영문 대문자·숫자 1~20자가 아님 | 형식 확인 (예: `BTC`) |
+| `INVALID_INTERVAL` | 400 | interval이 1m·1h·1d가 아님 | 허용 값 사용 |
+| `INVALID_RANGE` | 400 | from ≥ to, 또는 간격별 최대 기간 초과 | 기간 축소 (1m 1일, 1h 31일, 1d 366일) |
+| `INVALID_PARAMETER` | 400 | from·to 형식 오류 | ISO-8601 UTC 사용 |
+| `UNSUPPORTED_SYMBOL` | 404 | 수집하지 않는 코인 | 지원 코인 확인 |
+| `MARKET_DATA_NOT_READY` | 503 | 시세·환율 준비 전 (`missing`에 누락 항목) | `Retry-After` 초 후 재시도 |
