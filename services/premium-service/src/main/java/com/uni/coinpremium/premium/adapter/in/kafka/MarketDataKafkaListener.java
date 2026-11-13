@@ -27,7 +27,7 @@ public class MarketDataKafkaListener implements ConsumerSeekAware {
     private static final Logger log = LoggerFactory.getLogger(MarketDataKafkaListener.class);
 
     private static final String MDC_KAFKA_RECORD = "kafkaRecord";   // 파싱 전에도 알 수 있는 메시지 위치
-    private static final String MDC_EVENT_ID = "eventId";           // 파싱 후 알 수 있는 업무
+    private static final String MDC_EVENT_ID = "eventId";           // 파싱 후 알 수 있는 업무 ID
 
     private final JsonMapper jsonMapper;
     private final MarketDataRepository repository;
@@ -50,7 +50,7 @@ public class MarketDataKafkaListener implements ConsumerSeekAware {
             // 불량 메시지 1건 때문에 컨슈머가 멈추지 않도록 기록 후 건너뜀
             log.warn("[kafka] 시세 메시지 처리 실패 - payload={}", record.value(), e);
         } finally {
-            clearMdc();
+            clearMdc(); // 리스너 스레드는 재사용되므로 다음 메시지에 값이 남지 않게
         }
     }
 
@@ -61,6 +61,7 @@ public class MarketDataKafkaListener implements ConsumerSeekAware {
             ExchangeRateEvent event = jsonMapper.readValue(record.value(), ExchangeRateEvent.class);
             MDC.put(MDC_EVENT_ID, event.eventId());
             repository.saveFxRate(new FxRate(event.rate(), event.publishedAt()));
+            log.info("[kafka] 환율 반영 - rate={}", event.rate());
         } catch (Exception e) {
             log.warn("[kafka] 환율 메시지 처리 실패 - payload={}", record.value(), e);
         } finally {
