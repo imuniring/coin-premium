@@ -6,9 +6,11 @@ import com.uni.coinpremium.contract.Topics;
 import com.uni.coinpremium.premium.application.port.out.MarketDataRepository;
 import com.uni.coinpremium.premium.domain.FxRate;
 import com.uni.coinpremium.premium.domain.PriceQuote;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.listener.ConsumerSeekAware;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,9 @@ public class MarketDataKafkaListener implements ConsumerSeekAware {
 
     private static final Logger log = LoggerFactory.getLogger(MarketDataKafkaListener.class);
 
+    private static final String MDC_KAFKA_RECORD = "kafkaRecord";   // 파싱 전에도 알 수 있는 메시지 위치
+    private static final String MDC_EVENT_ID = "eventId";           // 파싱 후 알 수 있는 업무
+
     private final JsonMapper jsonMapper;
     private final MarketDataRepository repository;
 
@@ -33,27 +38,44 @@ public class MarketDataKafkaListener implements ConsumerSeekAware {
     }
 
     @KafkaListener(topics = Topics.TICKER)
-    public void onTicker(String payload) {
+    public void onTicker(ConsumerRecord<String, String> record) {
+        MDC.put(MDC_KAFKA_RECORD, location(record));
         try {
-            TickerEvent event = jsonMapper.readValue(payload, TickerEvent.class);
+            TickerEvent event = jsonMapper.readValue(record.value(), TickerEvent.class);
+            MDC.put(MDC_EVENT_ID, event.eventId());
             repository.saveQuote(new PriceQuote(
                     event.exchange().name(), event.symbol(), event.price(), event.tradedAt()));
             log.debug("[kafka] 시세 반영 - {} {} {}", event.exchange(), event.symbol(), event.price());
         } catch (Exception e) {
             // 불량 메시지 1건 때문에 컨슈머가 멈추지 않도록 기록 후 건너뜀
-            log.warn("[kafka] 시세 메시지 처리 실패 - payload={}", payload, e);
+            log.warn("[kafka] 시세 메시지 처리 실패 - payload={}", record.value(), e);
+        } finally {
+            clearMdc();
         }
     }
 
     @KafkaListener(topics = Topics.EXCHANGE_RATE)
-    public void onExchangeRate(String payload) {
+    public void onExchangeRate(ConsumerRecord<String, String> record) {
+        MDC.put(MDC_KAFKA_RECORD, location(record));
         try {
-            ExchangeRateEvent event = jsonMapper.readValue(payload, ExchangeRateEvent.class);
+            ExchangeRateEvent event = jsonMapper.readValue(record.value(), ExchangeRateEvent.class);
+            MDC.put(MDC_EVENT_ID, event.eventId());
             repository.saveFxRate(new FxRate(event.rate(), event.publishedAt()));
-            log.info("[kafka] 환율 반영 - rate={}, eventId={}", event.rate(), event.eventId());
         } catch (Exception e) {
-            log.warn("[kafka] 환율 메시지 처리 실패 - payload={}", payload, e);
+            log.warn("[kafka] 환율 메시지 처리 실패 - payload={}", record.value(), e);
+        } finally {
+            clearMdc();
         }
+    }
+
+    // 예: market.ticker.v1-0@1523 (Kafka UI에서 이 위치로 메시지를 바로 찾을 수 있음)
+    private static String location(ConsumerRecord<?, ?> record) {
+        return record.topic() + "-" + record.partition() + "@" + record.offset();
+    }
+
+    private static void clearMdc() {
+        MDC.remove(MDC_KAFKA_RECORD);
+        MDC.remove(MDC_EVENT_ID);
     }
 
     /**
