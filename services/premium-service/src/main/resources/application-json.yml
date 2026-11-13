@@ -1,0 +1,11 @@
+# json profile: 로그를 ECS(Elastic Common Schema) JSON으로 출력
+# 로컬 개발은 기본 텍스트 로그, 컨테이너·K8s에서만 이 profile을 켠다
+logging:
+  structured:
+    format:
+      console: ecs                              # 콘솔 출력을 JSON으로
+    ecs:
+      service:
+        name: ${spring.application.name}        # 로그마다 어느 서비스인지 표시
+        environment: local                      # 배포 환경 구분 (K8s 단계에서 덮어쓰기)
+        node-name: ${HOSTNAME:local}            # 인스턴스 구분 (컨테이너·K8s에서는 컨테이너 ID·Pod 이름)
