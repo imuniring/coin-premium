@@ -3,6 +3,7 @@ package com.uni.coinpremium.collector.adapter.in.websocket;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
@@ -14,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,6 +43,7 @@ public abstract class ExchangeWebSocketClient {
     private final AtomicBoolean reconnectScheduled = new AtomicBoolean();      // 재연결 중복 예약 방지
     private volatile WebSocket webSocket;
     private volatile Instant lastMessageAt = Instant.now();
+    private volatile String connectionId;   // 현재 연결 ID (좀비 감지 로그용)
     private volatile boolean stopping;
 
     // ===== 자식 클래스가 구현하는 부분 =====
@@ -85,16 +88,23 @@ public abstract class ExchangeWebSocketClient {
             return;
         }
         reconnectScheduled.set(false);
-        log.info("[{}] 연결 시도 (연속 실패 {}회)", name(), attempt.get());
+        String connId = UUID.randomUUID().toString();   // 연결 시도마다 새 ID
+        connectionId = connId;
 
-        httpClient.newWebSocketBuilder()
-                .buildAsync(uri(), new Listener())
-                .thenAccept(ws -> webSocket = ws)
-                .exceptionally(e -> {
-                    log.warn("[{}] 연결 실패: {}", name(), e.getMessage());
-                    scheduleReconnect();
-                    return null;
-                });
+        withMdc(connId, () -> {
+            log.info("[{}] 연결 시도 (연속 실패 {}회)", name(), attempt.get());
+            httpClient.newWebSocketBuilder()
+                    .buildAsync(uri(), new Listener(connId))
+                    .thenAccept(ws -> webSocket = ws)
+                    .exceptionally(e -> {
+                        // 연결 실패 콜백도 다른 스레드에서 실행되므로 다시 MDC를 넣는다
+                        withMdc(connId, () -> {
+                            log.warn("[{}] 연결 실패: {}", name(), e.getMessage());
+                            scheduleReconnect();
+                        });
+                        return null;
+                    });
+        });
     }
 
     private void scheduleReconnect() {
@@ -122,9 +132,23 @@ public abstract class ExchangeWebSocketClient {
         }
         Duration idle = Duration.between(lastMessageAt, Instant.now());
         if (idle.compareTo(IDLE_TIMEOUT) > 0) {
-            log.warn("[{}] {}초간 수신 없음 → 강제 재연결", name(), idle.toSeconds());
-            ws.abort();
-            scheduleReconnect();
+            withMdc(connectionId, () -> {
+                log.warn("[{}] {}초간 수신 없음 → 강제 재연결", name(), idle.toSeconds());
+                ws.abort();
+                scheduleReconnect();
+            });
+        }
+    }
+
+    /**
+     * 거래소·연결 ID를 MDC에 넣은 채로 작업 실행
+     * WebSocket 콜백은 HttpClient 내부 스레드에서 돌아 스레드가 계속 바뀌므로,
+     * 콜백 입구마다 넣고 끝나면 자동으로 지운다.
+     */
+    private void withMdc(String connId, Runnable action) {
+        try (var exchange = MDC.putCloseable("exchange", name());
+             var conn = MDC.putCloseable("connectionId", connId)) {
+            action.run();
         }
     }
 
@@ -132,55 +156,70 @@ public abstract class ExchangeWebSocketClient {
 
     private final class Listener implements WebSocket.Listener {
 
+        private final String connId;   // 이 연결의 ID (Listener는 연결마다 새로 생성됨)
         private final StringBuilder textBuffer = new StringBuilder();
         private final ByteArrayOutputStream binaryBuffer = new ByteArrayOutputStream();
 
+        private Listener(String connId) {
+            this.connId = connId;
+        }
+
         @Override
         public void onOpen(WebSocket ws) {
-            log.info("[{}] 연결 성공", name());
-            lastMessageAt = Instant.now();
-            String subscribe = subscribeMessage();
-            if (subscribe != null) {
-                ws.sendText(subscribe, true);
-            }
-            ws.request(1);
+            withMdc(connId, () -> {
+                log.info("[{}] 연결 성공", name());
+                lastMessageAt = Instant.now();
+                String subscribe = subscribeMessage();
+                if (subscribe != null) {
+                    ws.sendText(subscribe, true);
+                }
+                ws.request(1);
+            });
         }
 
         @Override
         public CompletionStage<?> onText(WebSocket ws, CharSequence data, boolean last) {
-            textBuffer.append(data);
-            if (last) {
-                dispatch(textBuffer.toString());
-                textBuffer.setLength(0);
-            }
-            ws.request(1);
+            withMdc(connId, () -> {
+                textBuffer.append(data);
+                if (last) {
+                    dispatch(textBuffer.toString());
+                    textBuffer.setLength(0);
+                }
+                ws.request(1);
+            });
             return null;
         }
 
         @Override
         public CompletionStage<?> onBinary(WebSocket ws, ByteBuffer data, boolean last) {
-            byte[] bytes = new byte[data.remaining()];
-            data.get(bytes);
-            binaryBuffer.writeBytes(bytes);
-            if (last) {
-                dispatch(binaryBuffer.toString(StandardCharsets.UTF_8));
-                binaryBuffer.reset();
-            }
-            ws.request(1);
+            withMdc(connId, () -> {
+                byte[] bytes = new byte[data.remaining()];
+                data.get(bytes);
+                binaryBuffer.writeBytes(bytes);
+                if (last) {
+                    dispatch(binaryBuffer.toString(StandardCharsets.UTF_8));
+                    binaryBuffer.reset();
+                }
+                ws.request(1);
+            });
             return null;
         }
 
         @Override
         public CompletionStage<?> onClose(WebSocket ws, int statusCode, String reason) {
-            log.warn("[{}] 연결 종료 - code={}, reason={}", name(), statusCode, reason);
-            scheduleReconnect();
+            withMdc(connId, () -> {
+                log.warn("[{}] 연결 종료 - code={}, reason={}", name(), statusCode, reason);
+                scheduleReconnect();
+            });
             return null;
         }
 
         @Override
         public void onError(WebSocket ws, Throwable error) {
-            log.error("[{}] 연결 에러", name(), error);
-            scheduleReconnect();
+            withMdc(connId, () -> {
+                log.error("[{}] 연결 에러", name(), error);
+                scheduleReconnect();
+            });
         }
 
         private void dispatch(String message) {
