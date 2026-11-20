@@ -16,6 +16,8 @@
 | [012](012-fetchone-test-isolation.md) | 통합 테스트의 fetchOne 유일성과 테스트 독립성 | 테스트 |
 | [013](013-zsh-exclamation.md) | 커밋 메시지의 `!` 때문에 zsh 에러 | 개발 환경 |
 | [014](014-requestparam-vs-pathvariable.md) | 경로 변수를 `@RequestParam`으로 받음 | 코드 |
+| [015](015-try-with-resources-mdc.md) | try-with-resources의 catch에서 MDC가 사라짐 | 로깅 |
+| [016](016-squash-merge-branch-conflict.md) | squash merge 후 새 PR에서 충돌 발생 | Git |
 
 ## 템플릿
 
