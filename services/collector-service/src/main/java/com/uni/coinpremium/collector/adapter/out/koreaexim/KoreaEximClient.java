@@ -4,8 +4,10 @@ import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetchExcep
 import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetcher;
 import com.uni.coinpremium.contract.ExchangeRateEvent;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -55,9 +57,13 @@ public class KoreaEximClient implements ExchangeRateFetcher {
             KoreaEximRate[] rates = jsonMapper.readValue(response.body(), KoreaEximRate[].class);
             return KoreaEximRateMapper.toUsdKrw(rates, date, Instant.now());
 
+        } catch (JacksonException e) {
+            // 응답 형식이 예상과 다름 (점검 페이지 등) → 다시 요청해도 같은 응답일 가능성이 높음
+            throw new ExchangeRateFetchException("koreaexim response parse failed", e, false);
         } catch (IOException e) {
-            // 타임아웃(HttpTimeoutException 포함), 네트워크 끊김 → 일시적
-            throw new ExchangeRateFetchException("koreaexim request failed: " + e.getMessage(), e, true);
+            // 타임아웃·네트워크 끊김은 일시적, 인증서·TLS 오류는 다시 해도 같은 결과
+            boolean retryable = !isTlsFailure(e);
+            throw new ExchangeRateFetchException("koreaexim request failed: " + e.getMessage(), e, retryable);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new ExchangeRateFetchException("koreaexim request interrupted", e, false);
@@ -69,5 +75,18 @@ public class KoreaEximClient implements ExchangeRateFetcher {
                 + "?authkey=" + URLEncoder.encode(properties.apiKey(), StandardCharsets.UTF_8)
                 + "&searchdate=" + date.format(DateTimeFormatter.BASIC_ISO_DATE)
                 + "&data=AP01");
+    }
+
+    /**
+     * 원인 체인에 TLS 오류가 있는지 확인
+     * HttpClient는 SSL 예외를 그대로 던지거나 IOException으로 감싸 던질 수 있어 cause까지 따라간다
+     */
+    static boolean isTlsFailure(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof SSLException) {
+                return true;
+            }
+        }
+        return false;
     }
 }
