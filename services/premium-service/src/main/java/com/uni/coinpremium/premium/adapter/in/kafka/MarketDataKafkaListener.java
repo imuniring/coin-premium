@@ -45,7 +45,11 @@ public class MarketDataKafkaListener implements ConsumerSeekAware {
             MDC.put(MDC_EVENT_ID, event.eventId());
             repository.saveQuote(new PriceQuote(
                     event.exchange().name(), event.symbol(), event.price(), event.tradedAt()));
-            log.debug("[kafka] 시세 반영 - {} {} {}", event.exchange(), event.symbol(), event.price());
+            log.atDebug()
+                    .addKeyValue("exchange", event.exchange().name())
+                    .addKeyValue("symbol", event.symbol())
+                    .addKeyValue("price", event.price())
+                    .log("[kafka] 시세 반영 - {} {} {}", event.exchange(), event.symbol(), event.price());
         } catch (Exception e) {
             // 불량 메시지 1건 때문에 컨슈머가 멈추지 않도록 기록 후 건너뜀
             log.warn("[kafka] 시세 메시지 처리 실패 - payload={}", record.value(), e);
@@ -61,7 +65,9 @@ public class MarketDataKafkaListener implements ConsumerSeekAware {
             ExchangeRateEvent event = jsonMapper.readValue(record.value(), ExchangeRateEvent.class);
             MDC.put(MDC_EVENT_ID, event.eventId());
             repository.saveFxRate(new FxRate(event.rate(), event.publishedAt()));
-            log.info("[kafka] 환율 반영 - rate={}", event.rate());
+            log.atInfo()
+                    .addKeyValue("rate", event.rate())
+                    .log("[kafka] 환율 반영 - rate={}", event.rate());
         } catch (Exception e) {
             log.warn("[kafka] 환율 메시지 처리 실패 - payload={}", record.value(), e);
         } finally {

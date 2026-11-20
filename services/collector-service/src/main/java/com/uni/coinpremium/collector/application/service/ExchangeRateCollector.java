@@ -58,7 +58,9 @@ public class ExchangeRateCollector {
                 return;
             }
         }
-        log.warn("[exchange-rate] 최근 {}일간 고시된 환율 없음", LOOKBACK_DAYS);
+        log.atWarn()
+                .addKeyValue("lookbackDays", LOOKBACK_DAYS)
+                .log("[exchange-rate] 최근 {}일간 고시된 환율 없음", LOOKBACK_DAYS);
     }
 
     private Optional<ExchangeRateEvent> fetchWithRetry(LocalDate date) {
@@ -71,7 +73,10 @@ public class ExchangeRateCollector {
                     throw e;
                 }
                 long waitMs = retryBackoff.toMillis() << (attempt - 1);   // 1s, 2s
-                log.warn("[exchange-rate] 일시적 실패 ({}회차), {}ms 후 재시도: {}", attempt, waitMs, e.getMessage());
+                log.atWarn()
+                        .addKeyValue("attempt", attempt)
+                        .addKeyValue("delayMs", waitMs)
+                        .log("[exchange-rate] 일시적 실패 ({}회차), {}ms 후 재시도: {}", attempt, waitMs, e.getMessage());
                 sleep(waitMs);
             }
         }
@@ -79,12 +84,17 @@ public class ExchangeRateCollector {
 
     private void publishIfChanged(ExchangeRateEvent event) {
         if (event.eventId().equals(lastPublishedEventId)) {
-            log.debug("[exchange-rate] 변경 없음, 발행 생략 - {}", event.eventId());
+            log.atDebug()
+                    .addKeyValue("eventId", event.eventId())
+                    .log("[exchange-rate] 변경 없음, 발행 생략");
             return;
         }
         publisher.publish(event);                 // 실패하면 예외 → 아래 줄 실행 안 됨 → 다음 스케줄에 재발행
         lastPublishedEventId = event.eventId();
-        log.info("[exchange-rate] 발행 - rate={}, 기준일={}", event.rate(), event.eventId());
+        log.atInfo()
+                .addKeyValue("eventId", event.eventId())
+                .addKeyValue("rate", event.rate())
+                .log("[exchange-rate] 발행 - rate={}", event.rate());
     }
 
     private static void sleep(long ms) {
