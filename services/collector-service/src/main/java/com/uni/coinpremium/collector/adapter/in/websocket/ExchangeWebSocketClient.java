@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -92,7 +93,10 @@ public abstract class ExchangeWebSocketClient {
         connectionId = connId;
 
         withMdc(connId, () -> {
-            log.info("[{}] 연결 시도 (연속 실패 {}회)", name(), attempt.get());
+            log.atInfo()
+                    .addKeyValue("attempt", attempt.get())
+                    .log("[{}] 연결 시도 (연속 실패 {}회)", name(), attempt.get());
+
             httpClient.newWebSocketBuilder()
                     .buildAsync(uri(), new Listener(connId))
                     .thenAccept(ws -> webSocket = ws)
@@ -113,7 +117,9 @@ public abstract class ExchangeWebSocketClient {
             return;
         }
         long delayMs = backoffMillis(attempt.getAndIncrement());
-        log.warn("[{}] {}ms 후 재연결 예정", name(), delayMs);
+        log.atWarn()
+                .addKeyValue("delayMs", delayMs)
+                .log("[{}] {}ms 후 재연결 예정", name(), delayMs);
         scheduler.schedule(this::connect, delayMs, TimeUnit.MILLISECONDS);
     }
 
@@ -133,7 +139,9 @@ public abstract class ExchangeWebSocketClient {
         Duration idle = Duration.between(lastMessageAt, Instant.now());
         if (idle.compareTo(IDLE_TIMEOUT) > 0) {
             withMdc(connectionId, () -> {
-                log.warn("[{}] {}초간 수신 없음 → 강제 재연결", name(), idle.toSeconds());
+                log.atWarn()
+                        .addKeyValue("idleSeconds", idle.toSeconds())
+                        .log("[{}] {}초간 수신 없음 → 강제 재연결", name(), idle.toSeconds());
                 ws.abort();
                 scheduleReconnect();
             });
@@ -146,7 +154,7 @@ public abstract class ExchangeWebSocketClient {
      * 콜백 입구마다 넣고 끝나면 자동으로 지운다.
      */
     private void withMdc(String connId, Runnable action) {
-        try (var exchange = MDC.putCloseable("exchange", name());
+        try (var exchange = MDC.putCloseable("exchange", name().toUpperCase(Locale.ROOT));
              var conn = MDC.putCloseable("connectionId", connId)) {
             action.run();
         }
@@ -208,7 +216,10 @@ public abstract class ExchangeWebSocketClient {
         @Override
         public CompletionStage<?> onClose(WebSocket ws, int statusCode, String reason) {
             withMdc(connId, () -> {
-                log.warn("[{}] 연결 종료 - code={}, reason={}", name(), statusCode, reason);
+                log.atWarn()
+                        .addKeyValue("statusCode", statusCode)
+                        .addKeyValue("reason", reason)
+                        .log("[{}] 연결 종료 - code={}, reason={}", name(), statusCode, reason);
                 scheduleReconnect();
             });
             return null;

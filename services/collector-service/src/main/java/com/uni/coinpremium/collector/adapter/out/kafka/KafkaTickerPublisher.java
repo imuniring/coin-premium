@@ -35,7 +35,10 @@ public class KafkaTickerPublisher implements TickerPublisher {
         kafkaTemplate.send(Topics.TICKER, event.symbol(), event)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {
-                        log.error("[kafka] 시세 발행 실패 - eventId={}", event.eventId(), ex);
+                        log.atError()
+                                .addKeyValue("eventId", event.eventId())
+                                .setCause(ex)
+                                .log("[kafka] 시세 발행 실패");
                     }
                 });
     }
