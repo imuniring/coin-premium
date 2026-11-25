@@ -1,3 +1,6 @@
+server:
+  port: 8082
+
 spring:
   application:
     name: collector-service
@@ -56,6 +59,12 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: 1
         record-failure-predicate: com.uni.coinpremium.collector.adapter.out.koreaexim.RetryableFailure
 
-logging:
-  level:
-    com.uni.coinpremium.collector.adapter.out.log: WARN   # 테스트 중에만 publish 로그 숨김
+management:
+  endpoints:
+    web:
+      exposure:
+        # 필요한 창구만 연다 (prometheus는 5단계에서 수집기를 붙일 때)
+        include: health, circuitbreakers, retries, loggers, metrics
+  endpoint:
+    health:
+      show-details: always   # 로컬 확인용. 외부 노출 시 제한 필요
