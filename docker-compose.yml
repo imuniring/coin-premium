@@ -63,5 +63,20 @@ services:
       kafka:
         condition: service_healthy           # Kafka가 준비된 뒤에 시작
 
+  valkey:
+    image: valkey/valkey:9.0           # Redis 호환, BSD-3 라이선스. 9.0.x 최신 패치를 따라감
+    container_name: coin-valkey
+    ports:
+      - "127.0.0.1:6380:6379"          # 호스트 6379는 다른 프로젝트와 겹칠 수 있어 6380
+    command: [ "valkey-server", "--appendonly", "yes" ]   # 재시작해도 데이터 유지 (아래 설명)
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: [ "CMD", "valkey-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   mariadb-data:
+  valkey-data:

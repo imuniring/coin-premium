@@ -3,6 +3,7 @@ package com.uni.coinpremium.premium;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.mariadb.MariaDBContainer;
 
@@ -23,5 +24,11 @@ public class TestcontainersConfig {
     @ServiceConnection   // 컨테이너 주소를 spring.kafka.bootstrap-servers 대신 자동 연결
     KafkaContainer kafka() {
         return new KafkaContainer("apache/kafka:4.1.0");
+    }
+
+    @Bean
+    @ServiceConnection(name = "redis")   // Valkey는 Redis 호환 → spring.data.redis.* 대신 자동 연결
+    GenericContainer<?> valkey() {
+        return new GenericContainer<>("valkey/valkey:9.0").withExposedPorts(6379);
     }
 }

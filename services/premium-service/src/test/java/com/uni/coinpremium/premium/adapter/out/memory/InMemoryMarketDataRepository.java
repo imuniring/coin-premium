@@ -10,9 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * 메모리 저장소: Kafka 컨슈머 스레드가 쓰고, API 스레드가 읽는다
+ * 테스트용 가짜 저장소 (실제 앱은 ValkeyMarketDataRepository 사용)
+ * 서비스 단위 테스트에서 Valkey 없이 빠르게 쓰기 위해 유지
  */
-@Repository
 public class InMemoryMarketDataRepository implements MarketDataRepository {
 
     // key = "UPBIT:BTC"
