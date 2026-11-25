@@ -55,7 +55,3 @@ resilience4j:
         wait-duration-in-open-state: 10m      # 스케줄 주기(30분)보다 짧게
         permitted-number-of-calls-in-half-open-state: 1
         record-failure-predicate: com.uni.coinpremium.collector.adapter.out.koreaexim.RetryableFailure
-
-logging:
-  level:
-    com.uni.coinpremium.collector.adapter.out.log: WARN   # 테스트 중에만 publish 로그 숨김
