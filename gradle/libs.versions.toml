@@ -13,6 +13,7 @@ spring-boot-test    = { module = "org.springframework.boot:spring-boot-starter-t
 
 spring-jackson = { module = "org.springframework.boot:spring-boot-starter-jackson" }
 spring-webmvc  = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }   # 상태 확인 창구 (health, metrics 등)
 spring-kafka   = { module = "org.springframework.boot:spring-boot-starter-kafka" }
 mariadb        = { module = "org.mariadb.jdbc:mariadb-java-client" }
 
