@@ -21,6 +21,7 @@
 | [0015](0015-error-response.md) | 에러 응답 설계 (ProblemDetail + code) | 채택 |
 | [0016](0016-structured-logging.md) | 구조화 로깅: Spring Boot 내장 ECS 형식 | 채택 |
 | [0017](0017-trace-id-mdc.md) | 추적 ID(MDC) 설계: 입구별 키와 비동기 경계 전파 | 채택 |
+| [0018](0018-resilience4j.md) | 외부 API 복원력: Resilience4j 재시도·서킷 브레이커 | 채택 |
 
 ## 템플릿
 
