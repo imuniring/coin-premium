@@ -21,7 +21,9 @@ final class UpbitTradeMapper {
         }
 
         return new TickerEvent(
-                "UPBIT-" + msg.sequentialId(),            // 같은 체결은 항상 같은 ID (중복 판단용)
+                // sequential_id의 유일성 범위(전체/마켓별)가 문서에 없어 마켓 코드를 포함한다 (ADR 0008)
+                // 마켓별 번호라면 같은 밀리초에 체결된 다른 코인과 ID가 겹칠 수 있음
+                "UPBIT-" + msg.code() + "-" + msg.sequentialId(),   // 예: UPBIT-KRW-BTC-17938843438150000
                 Exchange.UPBIT,
                 parts[1],                                  // BTC
                 QuoteCurrency.valueOf(parts[0]),           // KRW

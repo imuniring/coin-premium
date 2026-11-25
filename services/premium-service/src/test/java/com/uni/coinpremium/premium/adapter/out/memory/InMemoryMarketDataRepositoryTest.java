@@ -55,4 +55,18 @@ class InMemoryMarketDataRepositoryTest {
 
         assertEquals(new BigDecimal("1340.7"), repository.findFxRate().orElseThrow().rate());
     }
+
+    @Test
+    @DisplayName("같은 시세가 두 번 와도 결과가 같다 (멱등성)")
+    void sameQuoteTwice() {
+        PriceQuote quote = new PriceQuote("UPBIT", "BTC", new BigDecimal("107160000"),
+                Instant.parse("2026-11-25T00:00:00Z"));
+
+        repository.saveQuote(quote);
+        PriceQuote afterFirst = repository.findQuote("UPBIT", "BTC").orElseThrow();
+        repository.saveQuote(quote);   // Kafka 재전달 등으로 같은 이벤트가 다시 옴
+        PriceQuote afterSecond = repository.findQuote("UPBIT", "BTC").orElseThrow();
+
+        assertEquals(afterFirst, afterSecond);
+    }
 }
