@@ -24,7 +24,7 @@ class UpbitTradeMapperTest {
 
         TickerEvent event = UpbitTradeMapper.toEvent(msg, RECEIVED_AT);
 
-        assertEquals("UPBIT-17938843438150000", event.eventId());
+        assertEquals("UPBIT-KRW-BTC-17938843438150000", event.eventId());
         assertEquals(Exchange.UPBIT, event.exchange());
         assertEquals("BTC", event.symbol());
         assertEquals(QuoteCurrency.KRW, event.quote());
@@ -40,5 +40,20 @@ class UpbitTradeMapperTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> UpbitTradeMapper.toEvent(msg, RECEIVED_AT));
+    }
+
+    @Test
+    @DisplayName("sequential_id가 같아도 마켓이 다르면 eventId가 다르다")
+    void sameSequentialIdDifferentMarket() {
+        // 같은 밀리초, 같은 sequential_id를 가진 두 마켓의 체결 (마켓별 번호일 경우)
+        UpbitTradeMessage btc = new UpbitTradeMessage(
+                "trade", "KRW-BTC", new BigDecimal("107160000"), 1793884343815L, 17938843438150000L);
+        UpbitTradeMessage eth = new UpbitTradeMessage(
+                "trade", "KRW-ETH", new BigDecimal("4500000"), 1793884343815L, 17938843438150000L);
+
+        String btcId = UpbitTradeMapper.toEvent(btc, RECEIVED_AT).eventId();
+        String ethId = UpbitTradeMapper.toEvent(eth, RECEIVED_AT).eventId();
+
+        assertNotEquals(btcId, ethId);
     }
 }
