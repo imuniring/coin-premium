@@ -21,14 +21,14 @@
 | 소비자 | premium-service (group: premium-service) |
 | 키 | 심볼 (예: `BTC`) |
 | 파티션 | 3 |
-| 전송 | 비동기 |
+| 전송 | 비동기 (보관함 + 전담 발행 스레드, ADR 0020) |
 | 소비 시작 위치 | 기동 시 맨 끝부터 (밀린 과거 시세는 불필요) |
 
 같은 코인의 국내·해외 시세가 같은 파티션에 모이도록 키를 심볼로 지정합니다.
 
 | 필드 | 타입 | 설명 |
 | --- | --- | --- |
-| eventId | String | Upbit: `UPBIT-{sequential_id}`, Binance: `BINANCE-{symbol}-{tradeId}` |
+| eventId | String | Upbit: `UPBIT-{code}-{sequential_id}`, Binance: `BINANCE-{symbol}-{tradeId}` |
 | exchange | UPBIT / BINANCE | 거래소 |
 | symbol | String | 정규화된 심볼 (`BTC`) |
 | quote | KRW / USDT | 가격 기준 통화 |
