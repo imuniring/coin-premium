@@ -3,6 +3,7 @@ spring-boot = "4.1.2"
 jooq = "3.21.9"
 archunit = "1.5.1"
 springdoc = "3.0.3"
+resilience4j = "2.4.0"
 
 [libraries]
 # Spring Boot 버전표(BOM): 아래 버전 없는 라이브러리들의 버전을 여기서 정해줌
@@ -33,6 +34,10 @@ junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 archunit = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
 springdoc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+
+# 외부 호출 복원력 (재시도, 서킷 브레이커)
+resilience4j-spring-boot = { module = "io.github.resilience4j:resilience4j-spring-boot4", version.ref = "resilience4j" }
+spring-aspectj           = { module = "org.springframework.boot:spring-boot-starter-aspectj" }   # @Retry·@CircuitBreaker 어노테이션 동작용
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
