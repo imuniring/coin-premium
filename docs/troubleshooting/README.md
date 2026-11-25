@@ -19,6 +19,7 @@
 | [015](015-try-with-resources-mdc.md) | try-with-resources의 catch에서 MDC가 사라짐 | 로깅 |
 | [016](016-squash-merge-branch-conflict.md) | squash merge 후 새 PR에서 충돌 발생 | Git |
 | [017](017-ssl-exception-classification.md) | SSL 예외 전체를 영구 실패로 분류해 연결 끊김까지 재시도 안 함 | 코드 |
+| [018](018-kafka-outage-blocks-websocket.md) | Kafka 장애 시 WebSocket 수신 스레드 블로킹 | 장애 |
 
 ## 템플릿
 

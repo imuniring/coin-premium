@@ -22,6 +22,8 @@
 | [0016](0016-structured-logging.md) | 구조화 로깅: Spring Boot 내장 ECS 형식 | 채택 |
 | [0017](0017-trace-id-mdc.md) | 추적 ID(MDC) 설계: 입구별 키와 비동기 경계 전파 | 채택 |
 | [0018](0018-resilience4j.md) | 외부 API 복원력: Resilience4j 재시도·서킷 브레이커 | 채택 |
+| [0019](0019-collector-actuator.md) | collector Actuator 도입: 관리용 웹 서버, 서킷 상태는 health 제외 | 채택 |
+| [0020](0020-ticker-buffered-publishing.md) | 시세 수신·발행 분리: 보관함과 전담 발행 스레드 | 채택 |
 
 ## 템플릿
 
