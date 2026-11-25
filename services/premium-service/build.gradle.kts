@@ -9,6 +9,8 @@ dependencies {
     implementation(libs.spring.kafka)
     implementation(libs.spring.jackson)
 
+    implementation(libs.spring.data.redis)   // 최신 시세·환율 공유 저장소 (Valkey)
+
     implementation(libs.spring.jooq)
     implementation(libs.spring.flyway)
     implementation(libs.flyway.mysql)

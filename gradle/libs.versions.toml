@@ -21,6 +21,8 @@ spring-jooq    = { module = "org.springframework.boot:spring-boot-starter-jooq" 
 spring-flyway  = { module = "org.springframework.boot:spring-boot-starter-flyway" }
 flyway-mysql   = { module = "org.flywaydb:flyway-mysql" }
 
+spring-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis" }   # Valkey(Redis 호환) 연결
+
 jooq-meta-extensions = { module = "org.jooq:jooq-meta-extensions", version.ref = "jooq" }
 
 spring-boot-testcontainers  = { module = "org.springframework.boot:spring-boot-testcontainers" }

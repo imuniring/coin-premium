@@ -21,6 +21,10 @@ spring:
     password: ${MARIADB_PASSWORD:}
   jooq:
     sql-dialect: MARIADB
+  data:
+    redis:
+      host: localhost
+      port: 6380   # docker-compose의 Valkey (Redis 호환 프로토콜)
 
 server:
   port: 8081   # 8080은 다른 프로젝트 kafka-ui가 사용 중
