@@ -3,6 +3,9 @@ package com.uni.coinpremium.collector.adapter.out.koreaexim;
 import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetchException;
 import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetcher;
 import com.uni.coinpremium.contract.ExchangeRateEvent;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -41,6 +44,8 @@ public class KoreaEximClient implements ExchangeRateFetcher {
     }
 
     @Override
+    @Retry(name = "koreaexim")
+    @CircuitBreaker(name = "koreaexim", fallbackMethod = "circuitOpen")
     public Optional<ExchangeRateEvent> fetchUsdKrw(LocalDate date) {
         HttpRequest request = HttpRequest.newBuilder(buildUri(date))
                 .timeout(Duration.ofSeconds(5))   // 응답이 안 오면 무한 대기하지 않게
@@ -64,11 +69,20 @@ public class KoreaEximClient implements ExchangeRateFetcher {
         } catch (IOException e) {
             // 타임아웃·네트워크 끊김(핸드셰이크 중 끊김 포함)은 일시적, 인증서 검증 실패는 다시 해도 같은 결과
             boolean retryable = !isCertificateFailure(e);
-            throw new ExchangeRateFetchException("koreaexim request failed: " + e.getMessage(), e, retryable);
+            throw new ExchangeRateFetchException("koreaexim request failed: " + describe(e), e, retryable);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new ExchangeRateFetchException("koreaexim request interrupted", e, false);
         }
+    }
+
+    /**
+     * 서킷이 열려 호출이 차단됐을 때만 실행 (파라미터 타입이 CallNotPermittedException이라 다른 예외는 그대로 전파)
+     * application 계층이 Resilience4j 예외를 몰라도 되도록 포트의 예외로 바꿔 던진다
+     */
+    @SuppressWarnings("unused")   // Resilience4j가 fallbackMethod 이름으로 찾아 호출
+    private Optional<ExchangeRateEvent> circuitOpen(LocalDate date, CallNotPermittedException e) {
+        throw new ExchangeRateFetchException("koreaexim circuit open - 호출 차단 중", e, false);
     }
 
     private URI buildUri(LocalDate date) {
@@ -90,5 +104,12 @@ public class KoreaEximClient implements ExchangeRateFetcher {
             }
         }
         return false;
+    }
+
+    // 메시지가 없는 예외(ConnectException 등)도 원인을 알 수 있게 예외 이름을 함께 남긴다
+    private static String describe(Throwable e) {
+        return e.getMessage() == null
+                ? e.getClass().getSimpleName()
+                : e.getClass().getSimpleName() + ": " + e.getMessage();
     }
 }
