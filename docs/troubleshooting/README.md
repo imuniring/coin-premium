@@ -18,6 +18,7 @@
 | [014](014-requestparam-vs-pathvariable.md) | 경로 변수를 `@RequestParam`으로 받음 | 코드 |
 | [015](015-try-with-resources-mdc.md) | try-with-resources의 catch에서 MDC가 사라짐 | 로깅 |
 | [016](016-squash-merge-branch-conflict.md) | squash merge 후 새 PR에서 충돌 발생 | Git |
+| [017](017-ssl-exception-classification.md) | SSL 예외 전체를 영구 실패로 분류해 연결 끊김까지 재시도 안 함 | 코드 |
 
 ## 템플릿
 
