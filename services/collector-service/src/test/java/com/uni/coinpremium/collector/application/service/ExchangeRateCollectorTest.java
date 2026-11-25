@@ -1,6 +1,5 @@
 package com.uni.coinpremium.collector.application.service;
 
-import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetchException;
 import com.uni.coinpremium.collector.application.port.out.ExchangeRateFetcher;
 import com.uni.coinpremium.contract.ExchangeRateEvent;
 import com.uni.coinpremium.contract.FiatCurrency;
@@ -9,13 +8,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.*;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ExchangeRateCollectorTest {
 
@@ -26,7 +27,7 @@ class ExchangeRateCollectorTest {
     private final List<ExchangeRateEvent> published = new ArrayList<>();
 
     private ExchangeRateCollector collector(ExchangeRateFetcher fetcher) {
-        return new ExchangeRateCollector(fetcher, published::add, SATURDAY, Duration.ZERO);   // 재시도 대기 0
+        return new ExchangeRateCollector(fetcher, published::add, SATURDAY);
     }
 
     private static ExchangeRateEvent rateOf(LocalDate date) {
@@ -45,37 +46,6 @@ class ExchangeRateCollectorTest {
 
         assertEquals(1, published.size());
         assertEquals("KOREAEXIM-USD-KRW-" + FRIDAY, published.get(0).eventId());
-    }
-
-    @Test
-    @DisplayName("일시적 실패는 재시도해서 성공한다")
-    void retryTransient() {
-        AtomicInteger calls = new AtomicInteger();
-        var collector = collector(date -> {
-            if (calls.incrementAndGet() < 3) {
-                throw new ExchangeRateFetchException("timeout", true);
-            }
-            return Optional.of(rateOf(date));
-        });
-
-        collector.collectLatest();
-
-        assertEquals(3, calls.get());   // 실패 2번 + 성공 1번
-        assertEquals(1, published.size());
-    }
-
-    @Test
-    @DisplayName("영구 실패는 재시도하지 않는다")
-    void noRetryOnPermanent() {
-        AtomicInteger calls = new AtomicInteger();
-        var collector = collector(date -> {
-            calls.incrementAndGet();
-            throw new ExchangeRateFetchException("auth error", false);
-        });
-
-        assertThrows(ExchangeRateFetchException.class, collector::collectLatest);
-        assertEquals(1, calls.get());   // 딱 1번만 호출
-        assertTrue(published.isEmpty());
     }
 
     @Test

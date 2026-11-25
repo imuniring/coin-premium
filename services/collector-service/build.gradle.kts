@@ -8,6 +8,9 @@ dependencies {
     implementation(libs.spring.jackson)
     implementation(libs.spring.kafka)   // 카탈로그에 이미 있음 (spring-boot-starter-kafka)
 
+    implementation(libs.resilience4j.spring.boot)   // 환율 API 재시도·서킷 브레이커
+    implementation(libs.spring.aspectj)             // 어노테이션 기반 적용에 필요한 AOP
+
     testImplementation(libs.spring.boot.test)
 
     testImplementation(libs.archunit)

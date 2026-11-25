@@ -35,6 +35,27 @@ exchange:
     url: https://oapi.koreaexim.go.kr/site/program/financial/exchangeJSON
     api-key: ${KOREAEXIM_API_KEY}
 
+# 외부 API 호출 복원력 (ADR 0010 → Resilience4j 전환)
+resilience4j:
+  retry:
+    instances:
+      koreaexim:
+        max-attempts: 3                       # 첫 시도 포함 최대 3번
+        wait-duration: 1s                     # 첫 재시도 전 대기
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2     # 1초 → 2초
+        retry-exception-predicate: com.uni.coinpremium.collector.adapter.out.koreaexim.RetryableFailure
+  circuitbreaker:
+    instances:
+      koreaexim:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 3                # 최근 3번 호출로 판단
+        minimum-number-of-calls: 3            # 3번은 채워야 판단 시작
+        failure-rate-threshold: 100           # 3번 모두 실패하면 OPEN
+        wait-duration-in-open-state: 10m      # 스케줄 주기(30분)보다 짧게
+        permitted-number-of-calls-in-half-open-state: 1
+        record-failure-predicate: com.uni.coinpremium.collector.adapter.out.koreaexim.RetryableFailure
+
 logging:
   level:
     com.uni.coinpremium.collector.adapter.out.log: WARN   # 테스트 중에만 publish 로그 숨김
