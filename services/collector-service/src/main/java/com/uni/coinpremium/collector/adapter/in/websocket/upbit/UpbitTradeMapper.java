@@ -3,6 +3,8 @@ package com.uni.coinpremium.collector.adapter.in.websocket.upbit;
 import com.uni.coinpremium.contract.Exchange;
 import com.uni.coinpremium.contract.QuoteCurrency;
 import com.uni.coinpremium.contract.TickerEvent;
+import com.uni.coinpremium.contract.registry.Coin;
+import com.uni.coinpremium.contract.registry.CoinRegistry;
 
 import java.time.Instant;
 
@@ -14,19 +16,18 @@ final class UpbitTradeMapper {
     private UpbitTradeMapper() {}
 
     static TickerEvent toEvent(UpbitTradeMessage msg, Instant receivedAt) {
-        // "KRW-BTC" → [KRW, BTC]
-        String[] parts = msg.code().split("-");
-        if (parts.length != 2) {
-            throw new IllegalArgumentException("unexpected market code: " + msg.code());
-        }
+        // "KRW-BTC" → 레지스트리에서 BTC를 찾음 (지원하지 않는 마켓이면 예외)
+        Coin coin = CoinRegistry.findByMarket(Exchange.UPBIT, msg.code())
+                .orElseThrow(() -> new IllegalArgumentException("unsupported market: " + msg.code()));
+        // 호가 통화는 마켓 코드 앞부분 (KRW-BTC → KRW)
+        QuoteCurrency quote = QuoteCurrency.valueOf(msg.code().substring(0, msg.code().indexOf('-')));
 
         return new TickerEvent(
                 // sequential_id의 유일성 범위(전체/마켓별)가 문서에 없어 마켓 코드를 포함한다 (ADR 0008)
-                // 마켓별 번호라면 같은 밀리초에 체결된 다른 코인과 ID가 겹칠 수 있음
-                "UPBIT-" + msg.code() + "-" + msg.sequentialId(),   // 예: UPBIT-KRW-BTC-17938843438150000
+                "UPBIT-" + msg.code() + "-" + msg.sequentialId(),
                 Exchange.UPBIT,
-                parts[1],                                  // BTC
-                QuoteCurrency.valueOf(parts[0]),           // KRW
+                coin.symbol(),                             // BTC
+                quote,                                     // KRW
                 msg.tradePrice(),
                 Instant.ofEpochMilli(msg.tradeTimestamp()),
                 receivedAt

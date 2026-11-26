@@ -11,14 +11,5 @@ import java.util.stream.Collectors;
  */
 @ConfigurationProperties(prefix = "exchange.binance")
 public record BinanceProperties(
-        String url,
-        List<String> symbols   // 예: BTCUSDT
-) {
-    // 예: wss://.../stream?streams=btcusdt@trade/ethusdt@trade
-    URI streamUri() {
-        String streams = symbols.stream()
-                .map(s -> s.toLowerCase() + "@trade")   // Binance 스트림 이름은 소문자
-                .collect(Collectors.joining("/"));
-        return URI.create(url + "/stream?streams=" + streams);
-    }
-}
+        String url
+) {}
