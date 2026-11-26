@@ -21,6 +21,10 @@ spring:
         spring.json.add.type.headers: false
         max.block.ms: 5000                   # 메타데이터 대기 최대 5초 (기본 60초, #42)
         delivery.timeout.ms: 300000          # 프로듀서 버퍼 안의 체결을 5분까지 재시도 (기본 2분)
+  data:
+    redis:
+      host: localhost
+      port: 6380   # docker-compose의 Valkey
   config:
     # 루트의 .env를 설정값으로 읽어옴 (실행 위치에 따라 경로가 달라서 두 개 지정)
     import: "optional:file:.env[.properties],optional:file:../../.env[.properties]"
@@ -73,5 +77,8 @@ management:
 
 collector:
   ticker-buffer:
-    capacity: 50000      # 초당 약 300건 × 3분 (Before 측정: Binance 평균 110, 최대 220건/초)
-    retry-backoff: 1s    # 전송 실패 후 같은 체결 재시도 간격
+    capacity: 50000
+    retry-backoff: 1s
+  leader:
+    ttl: 15s              # 열쇠 기한: 리더가 죽으면 최대 이만큼 뒤 대기조가 넘겨받음
+    renew-interval: 5s    # 연장 주기: 기한 안에 세 번 시도 (두 번 놓쳐도 유지)

@@ -74,11 +74,7 @@ public abstract class ExchangeWebSocketClient {
                 WATCHDOG_INTERVAL.toSeconds(), WATCHDOG_INTERVAL.toSeconds(), TimeUnit.SECONDS);
     }
 
-    /**
-     * 수집 시작 (여러 번 호출해도 안전)
-     * 지금은 앱 시작 시 호출, 이후 리더가 됐을 때 호출하도록 바뀜
-     */
-    @EventListener(ApplicationReadyEvent.class)
+    /** 수집 시작 (여러 번 호출해도 안전). 리더가 됐을 때 LeaderElection이 호출 */
     public synchronized void activate() {
         if (active) {
             return;

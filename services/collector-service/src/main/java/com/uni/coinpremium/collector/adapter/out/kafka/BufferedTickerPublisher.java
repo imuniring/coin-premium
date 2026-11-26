@@ -147,6 +147,11 @@ public class BufferedTickerPublisher implements TickerPublisher, SmartLifecycle 
         return worker != null;
     }
 
+    @Override
+    public int getPhase() {
+        return SmartLifecycle.DEFAULT_PHASE - 1;   // 리더 선출보다 먼저 시작, 나중에 종료
+    }
+
     private void run() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
