@@ -11,6 +11,9 @@ dependencies {
 
     implementation(libs.spring.data.redis)   // 최신 시세·환율 공유 저장소 (Valkey)
 
+    implementation(libs.shedlock.spring)   // 스케줄러 분산 락
+    implementation(libs.shedlock.redis)    // 락 저장소: Valkey
+
     implementation(libs.spring.jooq)
     implementation(libs.spring.flyway)
     implementation(libs.flyway.mysql)
