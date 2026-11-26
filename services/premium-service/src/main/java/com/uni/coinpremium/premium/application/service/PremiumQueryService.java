@@ -3,7 +3,7 @@ package com.uni.coinpremium.premium.application.service;
 import com.uni.coinpremium.premium.application.exception.MarketDataNotReadyException;
 import com.uni.coinpremium.premium.application.exception.UnsupportedSymbolException;
 import com.uni.coinpremium.premium.application.port.out.MarketDataRepository;
-import com.uni.coinpremium.premium.config.PremiumProperties;
+import com.uni.coinpremium.premium.application.port.out.SupportedCoins;
 import com.uni.coinpremium.premium.domain.FxRate;
 import com.uni.coinpremium.premium.domain.KimchiPremium;
 import com.uni.coinpremium.premium.domain.PriceQuote;
@@ -27,17 +27,17 @@ public class PremiumQueryService {
     private static final String FX_RATE = "FX_RATE";
 
     private final MarketDataRepository repository;
-    private final PremiumProperties properties;
+    private final SupportedCoins supportedCoins;
     private final Clock clock;
 
-    public PremiumQueryService(MarketDataRepository repository, PremiumProperties properties, Clock clock) {
+    public PremiumQueryService(MarketDataRepository repository, SupportedCoins supportedCoins, Clock clock) {
         this.repository = repository;
-        this.properties = properties;
+        this.supportedCoins = supportedCoins;
         this.clock = clock;
     }
 
     public PremiumSnapshot getPremium(String symbol) {
-        if (!properties.supports(symbol)) {
+        if (!supportedCoins.supports(symbol)) {
             throw new UnsupportedSymbolException(symbol);
         }
 

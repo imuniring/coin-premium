@@ -2,7 +2,7 @@ package com.uni.coinpremium.premium.application.service;
 
 import com.uni.coinpremium.premium.application.exception.MarketDataNotReadyException;
 import com.uni.coinpremium.premium.application.port.out.PremiumSnapshotRepository;
-import com.uni.coinpremium.premium.config.PremiumProperties;
+import com.uni.coinpremium.premium.application.port.out.SupportedCoins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -24,21 +24,21 @@ public class PremiumSnapshotService {
 
     private final PremiumQueryService queryService;
     private final PremiumSnapshotRepository repository;
-    private final PremiumProperties properties;
+    private final SupportedCoins supportedCoins;
     private final Clock clock;
 
     public PremiumSnapshotService(PremiumQueryService queryService, PremiumSnapshotRepository repository,
-                                  PremiumProperties properties, Clock clock) {
+                                  SupportedCoins supportedCoins, Clock clock) {
         this.queryService = queryService;
         this.repository = repository;
-        this.properties = properties;
+        this.supportedCoins = supportedCoins;
         this.clock = clock;
     }
 
     public void captureAll() {
         // 05:01:37 → 05:01:00 (스케줄러가 몇 초 늦게 돌아도 같은 "분"으로 묶임)
         Instant capturedAt = clock.instant().truncatedTo(ChronoUnit.MINUTES);
-        for (String symbol : properties.symbols()) {
+        for (String symbol : supportedCoins.symbols()) {
             capture(symbol, capturedAt);
         }
     }

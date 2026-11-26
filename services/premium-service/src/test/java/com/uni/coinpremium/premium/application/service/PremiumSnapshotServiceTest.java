@@ -2,7 +2,7 @@ package com.uni.coinpremium.premium.application.service;
 
 import com.uni.coinpremium.premium.adapter.out.memory.InMemoryMarketDataRepository;
 import com.uni.coinpremium.premium.application.port.out.PremiumSnapshotRepository;
-import com.uni.coinpremium.premium.config.PremiumProperties;
+import com.uni.coinpremium.premium.application.port.out.SupportedCoins;
 import com.uni.coinpremium.premium.domain.FxRate;
 import com.uni.coinpremium.premium.domain.PriceQuote;
 import org.junit.jupiter.api.DisplayName;
@@ -23,14 +23,14 @@ class PremiumSnapshotServiceTest {
     private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
 
     private final InMemoryMarketDataRepository market = new InMemoryMarketDataRepository();
-    private final PremiumProperties properties = new PremiumProperties(List.of("BTC", "ETH"));
-    private final PremiumQueryService queryService = new PremiumQueryService(market, properties, CLOCK);
+    private final SupportedCoins supportedCoins = () -> List.of("BTC", "ETH");   // 테스트용 지원 코인
+    private final PremiumQueryService queryService = new PremiumQueryService(market, supportedCoins, CLOCK);
 
     private record Saved(String symbol, Instant capturedAt) {}
     private final List<Saved> saved = new ArrayList<>();
 
     private PremiumSnapshotService serviceWith(PremiumSnapshotRepository repository) {
-        return new PremiumSnapshotService(queryService, repository, properties, CLOCK);
+        return new PremiumSnapshotService(queryService, repository, supportedCoins, CLOCK);
     }
 
     private void ready(String symbol) {
