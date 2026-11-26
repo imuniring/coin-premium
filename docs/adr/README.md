@@ -24,6 +24,10 @@
 | [0018](0018-resilience4j.md) | 외부 API 복원력: Resilience4j 재시도·서킷 브레이커 | 채택 |
 | [0019](0019-collector-actuator.md) | collector Actuator 도입: 관리용 웹 서버, 서킷 상태는 health 제외 | 채택 |
 | [0020](0020-ticker-buffered-publishing.md) | 시세 수신·발행 분리: 보관함과 전담 발행 스레드 | 채택 |
+| [0021](0021-valkey.md) | 공유 저장소로 Valkey 선택 (Redis 호환, BSD-3) | 채택 |
+| [0022](0022-premium-shared-market-data.md) | premium 다중 인스턴스: 최신 시세를 공유 저장소로 | 채택 |
+| [0023](0023-scheduler-lock.md) | 스케줄러 분산 락: ShedLock + Valkey | 채택 |
+| [0024](0024-collector-leader-election.md) | collector 다중 인스턴스: 리더 선출(active-standby) | 채택 |
 
 ## 템플릿
 
