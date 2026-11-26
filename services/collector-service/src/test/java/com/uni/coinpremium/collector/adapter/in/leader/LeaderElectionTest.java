@@ -3,6 +3,8 @@ package com.uni.coinpremium.collector.adapter.in.leader;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -42,7 +44,7 @@ class LeaderElectionTest {
     @BeforeEach
     void setUp() {
         redis = new StringRedisTemplate(factory);
-        redis.delete(LeaderElection.KEY);   // 테스트끼리 열쇠가 남지 않게
+        redis.delete(List.of(LeaderElection.KEY, LeaderElection.RENEWED_AT_KEY));
     }
 
     @Test
@@ -120,5 +122,32 @@ class LeaderElectionTest {
             election = new LeaderElection(redis, PROPS, name + "-instance",
                     granted::incrementAndGet, revoked::incrementAndGet);
         }
+    }
+
+    @Test
+    @DisplayName("대기조가 넘겨받으면 옛 리더가 마지막으로 살아 있던 시각부터의 공백을 기록한다")
+    void recordsTakeoverGap() throws InterruptedException {
+        Node a = new Node("A");
+        Node b = new Node("B");
+        a.election.tick();                 // A 리더
+        a.election.tick();                 // A 연장 (살아 있던 시각 기록)
+        Instant aliveAt = Instant.now();
+
+        Thread.sleep(700);                 // A 쓰러짐 → 기한 만료
+        b.election.tick();                 // B 인계
+
+        LeaderElection.TakeoverGap gap = b.election.lastGap();
+        assertThat(gap).isNotNull();
+        assertThat(gap.from()).isBeforeOrEqualTo(aliveAt);          // A의 마지막 기록부터
+        assertThat(gap.duration()).isGreaterThanOrEqualTo(Duration.ofMillis(500));   // 최소 기한만큼은 비었음
+    }
+
+    @Test
+    @DisplayName("이전 리더 기록이 없으면(최초 기동) 공백을 기록하지 않는다")
+    void noGapOnFirstStart() {
+        Node a = new Node("A");
+        a.election.tick();
+
+        assertThat(a.election.lastGap()).isNull();
     }
 }

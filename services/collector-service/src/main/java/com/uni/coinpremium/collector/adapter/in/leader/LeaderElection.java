@@ -6,6 +6,7 @@ import org.springframework.context.SmartLifecycle;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -22,18 +23,24 @@ public class LeaderElection implements SmartLifecycle {
 
     private static final Logger log = LoggerFactory.getLogger(LeaderElection.class);
     static final String KEY = "leader:collector";
+    static final String RENEWED_AT_KEY = "leader:collector:renewed-at";   // 리더가 마지막으로 살아 있음을 확인한 시각
 
-    // 열쇠가 내 것일 때만 기한 연장 (확인 + 연장을 한 번에)
+    // 열쇠가 내 것일 때만 기한 연장 + 살아 있던 시각 기록 (확인·연장·기록을 한 번에)
+    // KEYS: [1]열쇠 [2]시각 기록   ARGV: [1]내 ID [2]기한(ms) [3]지금(epoch ms)
     private static final RedisScript<Long> RENEW = RedisScript.of("""
             if redis.call('GET', KEYS[1]) == ARGV[1] then
-              return redis.call('PEXPIRE', KEYS[1], ARGV[2])
+              redis.call('PEXPIRE', KEYS[1], ARGV[2])
+              redis.call('SET', KEYS[2], ARGV[3])
+              return 1
             end
             return 0
             """, Long.class);
 
-    // 열쇠가 내 것일 때만 삭제 (정상 종료 시 대기조가 바로 넘겨받게)
+    // 열쇠가 내 것일 때만 시각 기록 후 삭제 (정상 종료: 공백 시작점을 정확히 남김)
+    // KEYS: [1]열쇠 [2]시각 기록   ARGV: [1]내 ID [2]지금(epoch ms)
     private static final RedisScript<Long> RELEASE = RedisScript.of("""
             if redis.call('GET', KEYS[1]) == ARGV[1] then
+              redis.call('SET', KEYS[2], ARGV[2])
               return redis.call('DEL', KEYS[1])
             end
             return 0
@@ -70,6 +77,7 @@ public class LeaderElection implements SmartLifecycle {
                 }
             } else if (acquire()) {
                 leaseValidUntil = before.plus(properties.ttl());
+                recordTakeoverGap();
                 becomeLeader();
             }
         } catch (RuntimeException e) {
@@ -82,12 +90,36 @@ public class LeaderElection implements SmartLifecycle {
         }
     }
 
+    /**
+     * 옛 리더가 마지막으로 살아 있던 시각부터 지금까지를 공백으로 기록
+     * - 옛 리더는 마지막 기록 후 최대 연장 주기만큼 더 수집했을 수 있어 실제보다 넓게 잡힘 (놓치는 것보다 안전)
+     * - 기록이 없으면 최초 기동이라 공백 없음
+     */
+    private void recordTakeoverGap() {
+        Instant now = Instant.now();
+        String last = redis.opsForValue().get(RENEWED_AT_KEY);
+        redis.opsForValue().set(RENEWED_AT_KEY, String.valueOf(now.toEpochMilli()));
+        if (last == null) {
+            log.info("[leader] 이전 리더 기록 없음 (최초 기동)");
+            return;
+        }
+        TakeoverGap gap = new TakeoverGap(Instant.ofEpochMilli(Long.parseLong(last)), now);
+        lastGap = gap;
+        log.atWarn()
+                .addKeyValue("from", gap.from())
+                .addKeyValue("to", gap.to())
+                .addKeyValue("gapMs", gap.duration().toMillis())
+                .log("[leader] 리더 교대 공백 - {} ~ {} ({}ms), 공백 보정 대상",
+                        gap.from(), gap.to(), gap.duration().toMillis());
+    }
+
     private boolean acquire() {
         return Boolean.TRUE.equals(redis.opsForValue().setIfAbsent(KEY, instanceId, properties.ttl()));
     }
 
     private boolean renew() {
-        Long result = redis.execute(RENEW, List.of(KEY), instanceId, String.valueOf(properties.ttl().toMillis()));
+        Long result = redis.execute(RENEW, List.of(KEY, RENEWED_AT_KEY),
+                instanceId, String.valueOf(properties.ttl().toMillis()), String.valueOf(Instant.now().toEpochMilli()));
         return result != null && result == 1L;
     }
 
@@ -126,7 +158,8 @@ public class LeaderElection implements SmartLifecycle {
         if (leader) {
             stepDown("정상 종료");
             try {
-                redis.execute(RELEASE, List.of(KEY), instanceId);   // 대기조가 기한을 기다리지 않고 바로 넘겨받게
+                redis.execute(RELEASE, List.of(KEY, RENEWED_AT_KEY),
+                        instanceId, String.valueOf(Instant.now().toEpochMilli()));
             } catch (RuntimeException ex) {
                 log.warn("[leader] 종료 시 열쇠 반납 실패 (기한 만료로 해제됨): {}", ex.getMessage());
             }
@@ -136,5 +169,18 @@ public class LeaderElection implements SmartLifecycle {
     @Override
     public boolean isRunning() {
         return executor != null;
+    }
+
+    /** 리더 교대 공백: 옛 리더가 마지막으로 살아 있던 시각 ~ 새 리더가 수집을 시작한 시각 */
+    record TakeoverGap(Instant from, Instant to) {
+        Duration duration() {
+            return Duration.between(from, to);
+        }
+    }
+
+    private volatile TakeoverGap lastGap;   // 테스트 확인용
+
+    TakeoverGap lastGap() {
+        return lastGap;
     }
 }
