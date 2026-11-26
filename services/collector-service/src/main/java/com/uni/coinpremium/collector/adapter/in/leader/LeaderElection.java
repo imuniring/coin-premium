@@ -103,7 +103,8 @@ public class LeaderElection implements SmartLifecycle {
         onRevoked.run();
     }
 
-    boolean isLeader() {
+    /** 지금 이 인스턴스가 리더인가 (리더만 수집) */
+    public boolean isLeader() {
         return leader;
     }
 
