@@ -4,6 +4,7 @@ jooq = "3.21.9"
 archunit = "1.5.1"
 springdoc = "3.0.3"
 resilience4j = "2.4.0"
+shedlock = "7.9.0"
 
 [libraries]
 # Spring Boot 버전표(BOM): 아래 버전 없는 라이브러리들의 버전을 여기서 정해줌
@@ -29,6 +30,10 @@ spring-boot-testcontainers  = { module = "org.springframework.boot:spring-boot-t
 testcontainers-junit        = { module = "org.testcontainers:testcontainers-junit-jupiter" }
 testcontainers-mariadb      = { module = "org.testcontainers:testcontainers-mariadb" }
 testcontainers-kafka        = { module = "org.testcontainers:testcontainers-kafka" }
+
+# 스케줄러 분산 락 (여러 인스턴스 중 한 대만 실행)
+shedlock-spring = { module = "net.javacrumbs.shedlock:shedlock-spring", version.ref = "shedlock" }
+shedlock-redis  = { module = "net.javacrumbs.shedlock:shedlock-provider-redis-spring", version.ref = "shedlock" }
 
 # 공통 테스트
 junit-jupiter  = { module = "org.junit.jupiter:junit-jupiter" }
