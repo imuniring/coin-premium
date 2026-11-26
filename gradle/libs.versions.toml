@@ -38,6 +38,7 @@ shedlock-redis  = { module = "net.javacrumbs.shedlock:shedlock-provider-redis-sp
 # 공통 테스트
 junit-jupiter  = { module = "org.junit.jupiter:junit-jupiter" }
 junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+assertj        = { module = "org.assertj:assertj-core" }   # 테스트 검증 (버전은 Spring Boot BOM이 관리)
 
 archunit = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
