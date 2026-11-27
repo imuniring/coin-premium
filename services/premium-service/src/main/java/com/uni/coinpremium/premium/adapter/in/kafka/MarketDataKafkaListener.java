@@ -3,6 +3,7 @@ package com.uni.coinpremium.premium.adapter.in.kafka;
 import com.uni.coinpremium.contract.ExchangeRateEvent;
 import com.uni.coinpremium.contract.TickerEvent;
 import com.uni.coinpremium.contract.Topics;
+import com.uni.coinpremium.premium.application.port.out.FxRateHistory;
 import com.uni.coinpremium.premium.application.port.out.MarketDataRepository;
 import com.uni.coinpremium.premium.domain.FxRate;
 import com.uni.coinpremium.premium.domain.PriceQuote;
@@ -31,10 +32,12 @@ public class MarketDataKafkaListener implements ConsumerSeekAware {
 
     private final JsonMapper jsonMapper;
     private final MarketDataRepository repository;
+    private final FxRateHistory fxRateHistory;
 
-    public MarketDataKafkaListener(JsonMapper jsonMapper, MarketDataRepository repository) {
+    public MarketDataKafkaListener(JsonMapper jsonMapper, MarketDataRepository repository, FxRateHistory fxRateHistory) {
         this.jsonMapper = jsonMapper;
         this.repository = repository;
+        this.fxRateHistory = fxRateHistory;
     }
 
     @KafkaListener(topics = Topics.TICKER)
@@ -64,14 +67,28 @@ public class MarketDataKafkaListener implements ConsumerSeekAware {
         try {
             ExchangeRateEvent event = jsonMapper.readValue(record.value(), ExchangeRateEvent.class);
             MDC.put(MDC_EVENT_ID, event.eventId());
-            repository.saveFxRate(new FxRate(event.rate(), event.publishedAt()));
+            FxRate rate = new FxRate(event.rate(), event.publishedAt());
+
+            repository.saveFxRate(rate);   // 실시간 김프용 (Valkey) - 먼저
             log.atInfo()
                     .addKeyValue("rate", event.rate())
                     .log("[kafka] 환율 반영 - rate={}", event.rate());
+
+            saveHistory(rate, event.eventId());   // 공백 보정용 (DB) - 실패해도 위 반영은 유지
         } catch (Exception e) {
             log.warn("[kafka] 환율 메시지 처리 실패 - payload={}", record.value(), e);
         } finally {
             clearMdc();
+        }
+    }
+
+    /** 이력 저장 실패가 실시간 환율 반영을 막지 않도록 따로 잡는다 */
+    private void saveHistory(FxRate rate, String eventId) {
+        try {
+            fxRateHistory.save(rate, eventId);
+        } catch (Exception e) {
+            // 다음 기동 시 토픽 재소비로 다시 저장됨
+            log.warn("[kafka] 환율 이력 저장 실패 (다음 기동 시 재저장) - publishedAt={}", rate.publishedAt(), e);
         }
     }
 
