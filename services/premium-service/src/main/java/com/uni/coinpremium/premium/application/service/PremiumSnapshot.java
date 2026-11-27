@@ -12,5 +12,10 @@ public record PremiumSnapshot(
         PriceQuote domestic,
         PriceQuote foreign,
         FxRate fxRate,
-        boolean stale          // 국내·해외 시세 중 하나라도 오래됐으면 true
-) {}
+        boolean stale
+) {
+    /** 같은 내용을 오래된 값으로 표시 (저장소 장애로 최신 여부를 확인할 수 없을 때) */
+    public PremiumSnapshot asStale() {
+        return new PremiumSnapshot(premium, domestic, foreign, fxRate, true);
+    }
+}

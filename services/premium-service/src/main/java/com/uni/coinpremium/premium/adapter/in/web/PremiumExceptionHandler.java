@@ -2,6 +2,7 @@ package com.uni.coinpremium.premium.adapter.in.web;
 
 import com.uni.coinpremium.premium.application.exception.InvalidHistoryRangeException;
 import com.uni.coinpremium.premium.application.exception.MarketDataNotReadyException;
+import com.uni.coinpremium.premium.application.exception.MarketDataUnavailableException;
 import com.uni.coinpremium.premium.application.exception.UnsupportedSymbolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,13 @@ public class PremiumExceptionHandler {
     public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException e) {
         return problem(ErrorCode.INVALID_PARAMETER,
                 e.getName() + " 형식이 올바르지 않습니다. (시각은 ISO-8601 UTC, 예: 2026-11-11T00:00:00Z)");
+    }
+
+    @ExceptionHandler(MarketDataUnavailableException.class)
+    ProblemDetail handleUnavailable(MarketDataUnavailableException e) {
+        log.warn("[premium] 시세 저장소 장애, 마지막 값도 없음: {}", e.getMessage());
+        return problem(ErrorCode.MARKET_DATA_UNAVAILABLE,
+                "시세 저장소에 일시적으로 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.");
     }
 
     // 모든 에러 응답을 같은 모양으로
