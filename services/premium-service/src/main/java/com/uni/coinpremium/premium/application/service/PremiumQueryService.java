@@ -4,12 +4,15 @@ import com.uni.coinpremium.premium.application.exception.MarketDataNotReadyExcep
 import com.uni.coinpremium.premium.application.exception.UnsupportedSymbolException;
 import com.uni.coinpremium.premium.application.port.out.MarketDataRepository;
 import com.uni.coinpremium.premium.application.port.out.SupportedCoins;
+import com.uni.coinpremium.premium.config.FreshnessProperties;
 import com.uni.coinpremium.premium.domain.FxRate;
 import com.uni.coinpremium.premium.domain.KimchiPremium;
 import com.uni.coinpremium.premium.domain.PriceQuote;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,11 +31,14 @@ public class PremiumQueryService {
 
     private final MarketDataRepository repository;
     private final SupportedCoins supportedCoins;
+    private final Duration maxQuoteAge;
     private final Clock clock;
 
-    public PremiumQueryService(MarketDataRepository repository, SupportedCoins supportedCoins, Clock clock) {
+    public PremiumQueryService(MarketDataRepository repository, SupportedCoins supportedCoins,
+                               FreshnessProperties freshness, Clock clock) {
         this.repository = repository;
         this.supportedCoins = supportedCoins;
+        this.maxQuoteAge = freshness.maxQuoteAge();
         this.clock = clock;
     }
 
@@ -58,7 +64,9 @@ public class PremiumQueryService {
         PriceQuote f = foreign.orElseThrow();
         FxRate fx = fxRate.orElseThrow();
 
+        Instant now = clock.instant();
         KimchiPremium premium = KimchiPremium.calculate(symbol, d.price(), f.price(), fx.rate(), clock.instant());
-        return new PremiumSnapshot(premium, d, f, fx);
+        boolean stale = d.isStale(now, maxQuoteAge) || f.isStale(now, maxQuoteAge);
+        return new PremiumSnapshot(premium, d, f, fx, stale);
     }
 }

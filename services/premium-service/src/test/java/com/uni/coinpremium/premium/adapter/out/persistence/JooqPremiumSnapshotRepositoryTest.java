@@ -44,7 +44,7 @@ class JooqPremiumSnapshotRepositoryTest {
         var foreign = new PriceQuote("BINANCE", symbol, new BigDecimal("79528.57"), NOW);
         var fx = new FxRate(new BigDecimal("1340.7"), NOW);
         var premium = KimchiPremium.calculate(symbol, domestic.price(), foreign.price(), fx.rate(), NOW);
-        return new PremiumSnapshot(premium, domestic, foreign, fx);
+        return new PremiumSnapshot(premium, domestic, foreign, fx, false);  // 저장소 테스트는 신선한 시세 기준
     }
 
     @Test

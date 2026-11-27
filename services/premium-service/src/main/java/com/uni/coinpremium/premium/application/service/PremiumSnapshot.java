@@ -11,5 +11,6 @@ public record PremiumSnapshot(
         KimchiPremium premium,
         PriceQuote domestic,
         PriceQuote foreign,
-        FxRate fxRate
+        FxRate fxRate,
+        boolean stale          // 국내·해외 시세 중 하나라도 오래됐으면 true
 ) {}
