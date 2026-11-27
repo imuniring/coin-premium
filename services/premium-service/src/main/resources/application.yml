@@ -32,3 +32,6 @@ server:
 premium:
   freshness:
     max-quote-age: 60s   # 거래가 뜸한 코인을 추가할 때 다시 볼 것 (체결 없이 60초가 흔하면 공백이 자주 생김)
+  backfill:
+    lookback: 6h        # 최근 6시간만 검사 (오래된 공백은 4단계 일일 배치)
+    settle-delay: 2m    # 최근 2분은 제외 (실시간 저장이 아직 안 끝났을 수 있음)

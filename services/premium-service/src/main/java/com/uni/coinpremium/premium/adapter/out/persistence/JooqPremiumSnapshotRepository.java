@@ -1,6 +1,7 @@
 package com.uni.coinpremium.premium.adapter.out.persistence;
 
 import com.uni.coinpremium.premium.application.port.out.PremiumSnapshotRepository;
+import com.uni.coinpremium.premium.application.port.out.SnapshotTimeline;
 import com.uni.coinpremium.premium.application.service.PremiumSnapshot;
 import com.uni.coinpremium.premium.domain.SnapshotSource;
 import org.jooq.DSLContext;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import static com.uni.coinpremium.premium.jooq.Tables.PREMIUM_SNAPSHOT;
 
@@ -16,7 +18,7 @@ import static com.uni.coinpremium.premium.jooq.Tables.PREMIUM_SNAPSHOT;
  * jOOQ 기반 스냅샷 저장
  */
 @Repository
-public class JooqPremiumSnapshotRepository implements PremiumSnapshotRepository {
+public class JooqPremiumSnapshotRepository implements PremiumSnapshotRepository, SnapshotTimeline {
 
     private final DSLContext dsl;
 
@@ -40,6 +42,16 @@ public class JooqPremiumSnapshotRepository implements PremiumSnapshotRepository 
                 .onDuplicateKeyIgnore()   // 같은 (symbol, captured_at)이 있으면 조용히 건너뜀
                 .execute();
         return inserted == 1;
+    }
+
+    @Override
+    public List<Instant> capturedMinutes(String symbol, Instant from, Instant to) {
+        return dsl.select(PREMIUM_SNAPSHOT.CAPTURED_AT)
+                .from(PREMIUM_SNAPSHOT)
+                .where(PREMIUM_SNAPSHOT.SYMBOL.eq(symbol)
+                        .and(PREMIUM_SNAPSHOT.CAPTURED_AT.ge(utc(from)))
+                        .and(PREMIUM_SNAPSHOT.CAPTURED_AT.lt(utc(to))))
+                .fetch(r -> r.value1().toInstant(ZoneOffset.UTC));   // DB의 UTC 시각 → Instant
     }
 
     // Instant(UTC 시각) → UTC 기준 LocalDateTime (DB의 DATETIME은 시간대 정보가 없음)
