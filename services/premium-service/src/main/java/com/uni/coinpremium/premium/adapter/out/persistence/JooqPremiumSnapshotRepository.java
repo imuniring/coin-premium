@@ -2,6 +2,7 @@ package com.uni.coinpremium.premium.adapter.out.persistence;
 
 import com.uni.coinpremium.premium.application.port.out.PremiumSnapshotRepository;
 import com.uni.coinpremium.premium.application.service.PremiumSnapshot;
+import com.uni.coinpremium.premium.domain.SnapshotSource;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
@@ -24,7 +25,7 @@ public class JooqPremiumSnapshotRepository implements PremiumSnapshotRepository 
     }
 
     @Override
-    public boolean save(PremiumSnapshot s, Instant capturedAt) {
+    public boolean save(PremiumSnapshot s, Instant capturedAt, SnapshotSource source) {
         int inserted = dsl.insertInto(PREMIUM_SNAPSHOT)
                 .set(PREMIUM_SNAPSHOT.SYMBOL, s.premium().symbol())
                 .set(PREMIUM_SNAPSHOT.PREMIUM_RATE, s.premium().rate())
@@ -35,6 +36,7 @@ public class JooqPremiumSnapshotRepository implements PremiumSnapshotRepository 
                 .set(PREMIUM_SNAPSHOT.FOREIGN_TRADED_AT, utc(s.foreign().tradedAt()))
                 .set(PREMIUM_SNAPSHOT.FX_PUBLISHED_AT, utc(s.fxRate().publishedAt()))
                 .set(PREMIUM_SNAPSHOT.CAPTURED_AT, utc(capturedAt))
+                .set(PREMIUM_SNAPSHOT.SOURCE, source.name())
                 .onDuplicateKeyIgnore()   // 같은 (symbol, captured_at)이 있으면 조용히 건너뜀
                 .execute();
         return inserted == 1;

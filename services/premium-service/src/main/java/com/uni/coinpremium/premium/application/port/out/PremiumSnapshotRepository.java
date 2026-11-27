@@ -1,6 +1,7 @@
 package com.uni.coinpremium.premium.application.port.out;
 
 import com.uni.coinpremium.premium.application.service.PremiumSnapshot;
+import com.uni.coinpremium.premium.domain.SnapshotSource;
 
 import java.time.Instant;
 
@@ -9,6 +10,6 @@ import java.time.Instant;
  */
 public interface PremiumSnapshotRepository {
 
-    /** 저장했으면 true, 같은 코인·같은 시점 스냅샷이 이미 있으면 false */
-    boolean save(PremiumSnapshot snapshot, Instant capturedAt);
+    /** 저장 성공 시 true, 같은 (symbol, capturedAt)이 이미 있으면 false */
+    boolean save(PremiumSnapshot snapshot, Instant capturedAt, SnapshotSource source);
 }

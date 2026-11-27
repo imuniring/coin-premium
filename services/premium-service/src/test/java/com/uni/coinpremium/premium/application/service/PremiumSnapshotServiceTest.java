@@ -48,7 +48,7 @@ class PremiumSnapshotServiceTest {
         market.saveFxRate(new FxRate(new BigDecimal("1400"), NOW));
         ready("BTC");                    // ETH는 시세 없음
 
-        serviceWith((s, at) -> saved.add(new Saved(s.premium().symbol(), at))).captureAll();
+        serviceWith((s, at, src) -> saved.add(new Saved(s.premium().symbol(), at))).captureAll();
 
         assertEquals(List.of(new Saved("BTC", Instant.parse("2026-11-11T05:01:00Z"))), saved);
     }
@@ -60,7 +60,7 @@ class PremiumSnapshotServiceTest {
         ready("BTC");
         ready("ETH");
 
-        serviceWith((s, at) -> {
+        serviceWith((s, at, src) -> {
             if (s.premium().symbol().equals("BTC")) {
                 throw new IllegalStateException("DB 장애");
             }
@@ -79,7 +79,7 @@ class PremiumSnapshotServiceTest {
         market.saveQuote(new PriceQuote("UPBIT", "ETH", new BigDecimal("1000"), NOW.minusSeconds(61)));   // ETH 국내 시세 61초 전
         market.saveQuote(new PriceQuote("BINANCE", "ETH", new BigDecimal("0.7"), NOW));
 
-        serviceWith((s, at) -> saved.add(new Saved(s.premium().symbol(), at))).captureAll();
+        serviceWith((s, at, src) -> saved.add(new Saved(s.premium().symbol(), at))).captureAll();
 
         assertEquals(List.of(new Saved("BTC", Instant.parse("2026-11-11T05:01:00Z"))), saved);   // ETH는 없음
     }
