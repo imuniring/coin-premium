@@ -28,6 +28,7 @@
 | [0022](0022-premium-shared-market-data.md) | premium 다중 인스턴스: 최신 시세를 공유 저장소로 | 채택 |
 | [0023](0023-scheduler-lock.md) | 스케줄러 분산 락: ShedLock + Valkey | 채택 |
 | [0024](0024-collector-leader-election.md) | collector 다중 인스턴스: 리더 선출(active-standby) | 채택 |
+| [0025](0025-coin-registry.md) | 코인 레지스트리: 지원 코인과 거래소 마켓 코드를 공통 계약으로 | 채택 |
 
 ## 템플릿
 
