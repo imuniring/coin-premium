@@ -138,4 +138,6 @@ coin-premium/
 - [트러블슈팅](docs/troubleshooting/README.md)
 - [아키텍처 개요](docs/architecture/overview.md)
 - [이벤트 명세](docs/events.md)
+- [서비스 데이터 정책](docs/policy.md)
+- [성능·장애 실험](docs/performance/README.md)
 - [API 문서 (Mintlify)](https://uni-5277cc74.mintlify.site)
