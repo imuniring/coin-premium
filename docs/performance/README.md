@@ -7,3 +7,4 @@
 | --- | --- | --- |
 | [001](001-kafka-outage-ticker-buffer.md) | Kafka 장애 시 시세 수신: 보관함 도입 전후 | #42, ADR 0020 |
 | [002](002-multi-instance.md) | 다중 인스턴스: premium 공유 저장소·스케줄러 락·collector 리더 선출 | #61, #63, #65 |
+| [003](003-snapshot-backfill.md) | 오래된 시세 스냅샷 제거와 공백 보정 | #75, #85, #87 |

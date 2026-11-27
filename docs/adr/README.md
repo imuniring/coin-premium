@@ -29,6 +29,9 @@
 | [0023](0023-scheduler-lock.md) | 스케줄러 분산 락: ShedLock + Valkey | 채택 |
 | [0024](0024-collector-leader-election.md) | collector 다중 인스턴스: 리더 선출(active-standby) | 채택 |
 | [0025](0025-coin-registry.md) | 코인 레지스트리: 지원 코인과 거래소 마켓 코드를 공통 계약으로 | 채택 |
+| [0026](0026-quote-freshness.md) | 시세 신선도: 저장은 엄격하게, 보여 주기는 솔직하게 | 채택 |
+| [0027](0027-snapshot-backfill.md) | 김프 스냅샷 공백 감지·보정 | 채택 |
+| [0028](0028-fx-rate-history.md) | 환율 이력과 일자 전환 규칙 | 채택 |
 
 ## 템플릿
 
