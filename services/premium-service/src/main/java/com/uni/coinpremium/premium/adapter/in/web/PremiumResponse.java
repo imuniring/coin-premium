@@ -11,6 +11,7 @@ import java.time.Instant;
 public record PremiumResponse(
         String symbol,
         BigDecimal premiumRate,       // 김프 (%)
+        boolean stale,                // true면 시세가 오래됨 (domestic·foreign의 tradedAt으로 얼마나 지났는지 표시 가능)
         Market domestic,
         Market foreign,
         Fx exchangeRate,
@@ -26,6 +27,7 @@ public record PremiumResponse(
         return new PremiumResponse(
                 s.premium().symbol(),
                 s.premium().rate(),
+                s.stale(),
                 new Market(s.domestic().exchange(), s.domestic().price(), s.domestic().tradedAt()),
                 new Market(s.foreign().exchange(), s.foreign().price(), s.foreign().tradedAt()),
                 new Fx(s.fxRate().rate(), s.fxRate().publishedAt()),

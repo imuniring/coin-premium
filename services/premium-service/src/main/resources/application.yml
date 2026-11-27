@@ -28,3 +28,7 @@ spring:
 
 server:
   port: 8081   # 8080은 다른 프로젝트 kafka-ui가 사용 중
+
+premium:
+  freshness:
+    max-quote-age: 60s   # 거래가 뜸한 코인을 추가할 때 다시 볼 것 (체결 없이 60초가 흔하면 공백이 자주 생김)

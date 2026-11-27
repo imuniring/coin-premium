@@ -3,6 +3,7 @@ package com.uni.coinpremium.premium.application.service;
 import com.uni.coinpremium.premium.adapter.out.memory.InMemoryMarketDataRepository;
 import com.uni.coinpremium.premium.application.port.out.PremiumSnapshotRepository;
 import com.uni.coinpremium.premium.application.port.out.SupportedCoins;
+import com.uni.coinpremium.premium.config.FreshnessProperties;
 import com.uni.coinpremium.premium.domain.FxRate;
 import com.uni.coinpremium.premium.domain.PriceQuote;
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -24,7 +26,9 @@ class PremiumSnapshotServiceTest {
 
     private final InMemoryMarketDataRepository market = new InMemoryMarketDataRepository();
     private final SupportedCoins supportedCoins = () -> List.of("BTC", "ETH");   // 테스트용 지원 코인
-    private final PremiumQueryService queryService = new PremiumQueryService(market, supportedCoins, CLOCK);
+    private final PremiumQueryService queryService = new PremiumQueryService(
+            market, supportedCoins,
+            new FreshnessProperties(Duration.ofSeconds(60)), CLOCK);
 
     private record Saved(String symbol, Instant capturedAt) {}
     private final List<Saved> saved = new ArrayList<>();
@@ -65,5 +69,18 @@ class PremiumSnapshotServiceTest {
 
         assertEquals(1, saved.size());
         assertEquals("ETH", saved.get(0).symbol());
+    }
+
+    @Test
+    @DisplayName("시세가 오래된 코인은 저장하지 않는다 (공백 보정 대상)")
+    void skipStaleQuote() {
+        market.saveFxRate(new FxRate(new BigDecimal("1400"), NOW));
+        ready("BTC");                                                                          // BTC는 신선
+        market.saveQuote(new PriceQuote("UPBIT", "ETH", new BigDecimal("1000"), NOW.minusSeconds(61)));   // ETH 국내 시세 61초 전
+        market.saveQuote(new PriceQuote("BINANCE", "ETH", new BigDecimal("0.7"), NOW));
+
+        serviceWith((s, at) -> saved.add(new Saved(s.premium().symbol(), at))).captureAll();
+
+        assertEquals(List.of(new Saved("BTC", Instant.parse("2026-11-11T05:01:00Z"))), saved);   // ETH는 없음
     }
 }

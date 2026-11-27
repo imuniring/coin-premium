@@ -46,22 +46,32 @@ public class PremiumSnapshotService {
     private void capture(String symbol, Instant capturedAt) {
         // symbol이 아래 로그 전부에 필요하므로 MDC로 한 번에 붙인다
         // catch 로그에도 남아야 하므로 기존 try-catch 바깥에서 연다 (트러블슈팅 015)
-        try(var sym = MDC.putCloseable("symbol", symbol)) {
-            // 계산은 조회 API와 같은 서비스 재사용 → API 값과 저장 값이 항상 같은 규칙
-            boolean saved = repository.save(queryService.getPremium(symbol), capturedAt);
-            if (saved) {
-                log.info("[snapshot] 저장 - symbol={}, capturedAt={}", symbol, capturedAt);
-            } else {
-                log.debug("[snapshot] 이미 저장된 시점 - symbol={}, capturedAt={}", symbol, capturedAt);
+        try (var sym = MDC.putCloseable("symbol", symbol)) {
+            try {
+                // 계산은 조회 API와 같은 서비스 재사용 → API 값과 저장 값이 항상 같은 규칙
+                PremiumSnapshot snapshot = queryService.getPremium(symbol);
+                if (snapshot.stale()) {
+                    log.atWarn()
+                            .addKeyValue("domesticTradedAt", snapshot.domestic().tradedAt())
+                            .addKeyValue("foreignTradedAt", snapshot.foreign().tradedAt())
+                            .log("[snapshot] 시세가 오래돼 건너뜀 (공백 보정 대상) - symbol={}", symbol);
+                    return;
+                }
+                boolean saved = repository.save(snapshot, capturedAt);
+                if (saved) {
+                    log.info("[snapshot] 저장 - symbol={}, capturedAt={}", symbol, capturedAt);
+                } else {
+                    log.debug("[snapshot] 이미 저장된 시점 - symbol={}, capturedAt={}", symbol, capturedAt);
+                }
+            } catch (MarketDataNotReadyException e) {
+                // 기동 직후엔 정상 상황
+                log.atInfo()
+                        .addKeyValue("missing", e.missing())
+                        .log("[snapshot] 데이터 준비 전, 건너뜀 - symbol={}, missing={}", symbol, e.missing());
+            } catch (Exception e) {
+                // 한 코인의 실패가 다른 코인 저장을 막지 않도록 여기서 잡음
+                log.error("[snapshot] 저장 실패 - symbol={}", symbol, e);
             }
-        } catch (MarketDataNotReadyException e) {
-            // 기동 직후엔 정상 상황
-            log.atInfo()
-                    .addKeyValue("missing", e.missing())
-                    .log("[snapshot] 데이터 준비 전, 건너뜀 - symbol={}, missing={}", symbol, e.missing());
-        } catch (Exception e) {
-            // 한 코인의 실패가 다른 코인 저장을 막지 않도록 여기서 잡음
-            log.error("[snapshot] 저장 실패 - symbol={}", symbol, e);
         }
     }
 }
