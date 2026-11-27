@@ -3,7 +3,7 @@ package com.uni.coinpremium.premium.application.service;
 import com.uni.coinpremium.premium.application.exception.InvalidHistoryRangeException;
 import com.uni.coinpremium.premium.application.exception.UnsupportedSymbolException;
 import com.uni.coinpremium.premium.application.port.out.PremiumHistoryRepository;
-import com.uni.coinpremium.premium.config.PremiumProperties;
+import com.uni.coinpremium.premium.application.port.out.SupportedCoins;
 import com.uni.coinpremium.premium.domain.HistoryInterval;
 import org.springframework.stereotype.Service;
 
@@ -22,17 +22,16 @@ public class PremiumHistoryService {
     private static final Duration DEFAULT_RANGE = Duration.ofDays(1);   // 모든 간격의 최대 기간 이내
 
     private final PremiumHistoryRepository repository;
-    private final PremiumProperties properties;
+    private final SupportedCoins supportedCoins;
     private final Clock clock;
 
-    public PremiumHistoryService(PremiumHistoryRepository repository, PremiumProperties properties, Clock clock) {
+    public PremiumHistoryService(PremiumHistoryRepository repository, SupportedCoins supportedCoins, Clock clock) {
         this.repository = repository;
-        this.properties = properties;
+        this.supportedCoins = supportedCoins;
         this.clock = clock;
     }
-
     public PremiumHistory getHistory(String symbol, HistoryInterval interval, Instant from, Instant to) {
-        if (!properties.supports(symbol)) {
+        if (!supportedCoins.supports(symbol)) {
             throw new UnsupportedSymbolException(symbol);
         }
 

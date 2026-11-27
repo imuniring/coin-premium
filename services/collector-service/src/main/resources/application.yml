@@ -32,14 +32,8 @@ spring:
 exchange:
   upbit:
     url: wss://api.upbit.com/websocket/v1
-    codes:
-      - KRW-BTC
-      - KRW-ETH
   binance:
     url: wss://data-stream.binance.vision   # 시세 전용 엔드포인트
-    symbols:
-      - BTCUSDT
-      - ETHUSDT
   koreaexim:
     url: https://oapi.koreaexim.go.kr/site/program/financial/exchangeJSON
     api-key: ${KOREAEXIM_API_KEY}

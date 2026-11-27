@@ -2,6 +2,8 @@ package com.uni.coinpremium.collector.adapter.in.websocket.upbit;
 
 import com.uni.coinpremium.collector.adapter.in.websocket.ExchangeWebSocketClient;
 import com.uni.coinpremium.collector.application.port.out.TickerPublisher;
+import com.uni.coinpremium.contract.Exchange;
+import com.uni.coinpremium.contract.registry.CoinRegistry;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -39,7 +41,7 @@ public class UpbitWebSocketClient extends ExchangeWebSocketClient {
     // 예: [{"ticket":"..."},{"type":"trade","codes":["KRW-BTC","KRW-ETH"]}]
     @Override
     protected String subscribeMessage() {
-        String codes = properties.codes().stream()
+        String codes = CoinRegistry.marketsOf(Exchange.UPBIT).stream()
                 .map(code -> "\"" + code + "\"")
                 .collect(Collectors.joining(","));
         return "[{\"ticket\":\"%s\"},{\"type\":\"trade\",\"codes\":[%s]}]"

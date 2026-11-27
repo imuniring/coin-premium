@@ -3,7 +3,7 @@ package com.uni.coinpremium.premium.application.service;
 import com.uni.coinpremium.premium.adapter.out.memory.InMemoryMarketDataRepository;
 import com.uni.coinpremium.premium.application.exception.MarketDataNotReadyException;
 import com.uni.coinpremium.premium.application.exception.UnsupportedSymbolException;
-import com.uni.coinpremium.premium.config.PremiumProperties;
+import com.uni.coinpremium.premium.application.port.out.SupportedCoins;
 import com.uni.coinpremium.premium.domain.FxRate;
 import com.uni.coinpremium.premium.domain.PriceQuote;
 import org.junit.jupiter.api.DisplayName;
@@ -22,8 +22,9 @@ class PremiumQueryServiceTest {
     private static final Instant NOW = Instant.parse("2026-11-11T05:00:00Z");
 
     private final InMemoryMarketDataRepository repository = new InMemoryMarketDataRepository();
+    private final SupportedCoins supportedCoins = () -> List.of("BTC", "ETH");   // 테스트용 지원 코인
     private final PremiumQueryService service = new PremiumQueryService(
-            repository, new PremiumProperties(List.of("BTC", "ETH")), Clock.fixed(NOW, ZoneOffset.UTC));
+            repository, supportedCoins, Clock.fixed(NOW, ZoneOffset.UTC));
 
     private void saveAll() {
         repository.saveQuote(new PriceQuote("UPBIT", "BTC", new BigDecimal("107311000"), NOW));

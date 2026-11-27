@@ -1,7 +1,7 @@
 package com.uni.coinpremium.premium.application.service;
 
 import com.uni.coinpremium.premium.application.exception.InvalidHistoryRangeException;
-import com.uni.coinpremium.premium.config.PremiumProperties;
+import com.uni.coinpremium.premium.application.port.out.SupportedCoins;
 import com.uni.coinpremium.premium.domain.HistoryInterval;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,9 +18,10 @@ class PremiumHistoryServiceTest {
     private static final Instant NOW = Instant.parse("2026-11-11T06:00:00Z");
 
     // 저장소는 빈 목록을 돌려주는 람다 (기간 계산·검증만 확인)
+    private final SupportedCoins supportedCoins = () -> List.of("BTC");   // 테스트용 지원 코인
     private final PremiumHistoryService service = new PremiumHistoryService(
             (symbol, interval, from, to) -> List.of(),
-            new PremiumProperties(List.of("BTC")),
+            supportedCoins,
             Clock.fixed(NOW, ZoneOffset.UTC));
 
     @Test
