@@ -30,7 +30,7 @@
 | --- | --- | --- |
 | eventId | String | Upbit: `UPBIT-{code}-{sequential_id}`, Binance: `BINANCE-{symbol}-{tradeId}` |
 | exchange | UPBIT / BINANCE | 거래소 |
-| symbol | String | 정규화된 심볼 (`BTC`) |
+| symbol | String | 서비스 공통 심볼 (`BTC`). 거래소 마켓 코드와의 대응은 `CoinRegistry`(ADR 0025) 기준 |
 | quote | KRW / USDT | 가격 기준 통화 |
 | price | BigDecimal | 체결 가격 |
 | tradedAt | Instant | 거래소 체결 시각 |
