@@ -1,11 +1,12 @@
 package com.uni.coinpremium.premium.adapter.out.cache;
 
+import com.uni.coinpremium.premium.application.exception.MarketDataUnavailableException;
 import com.uni.coinpremium.premium.application.port.out.MarketDataRepository;
 import com.uni.coinpremium.premium.domain.FxRate;
 import com.uni.coinpremium.premium.domain.PriceQuote;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * 최신 시세·환율을 Valkey에 저장 (premium 여러 대가 같은 값을 보도록)
@@ -46,36 +48,49 @@ public class ValkeyMarketDataRepository implements MarketDataRepository {
 
     @Override
     public void saveQuote(PriceQuote quote) {
-        redis.execute(SAVE_IF_NEWER, List.of(quoteKey(quote.exchange(), quote.symbol())),
-                "tradedAt", millis(quote.tradedAt()), "price", quote.price().toPlainString());
+        call(() -> redis.execute(SAVE_IF_NEWER, List.of(quoteKey(quote.exchange(), quote.symbol())),
+                "tradedAt", millis(quote.tradedAt()), "price", quote.price().toPlainString()));
     }
 
     @Override
     public Optional<PriceQuote> findQuote(String exchange, String symbol) {
-        Map<Object, Object> hash = redis.opsForHash().entries(quoteKey(exchange, symbol));
-        if (hash.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(new PriceQuote(exchange, symbol,
-                new BigDecimal((String) hash.get("price")),
-                Instant.ofEpochMilli(Long.parseLong((String) hash.get("tradedAt")))));
+        return call(() -> {
+            Map<Object, Object> hash = redis.opsForHash().entries(quoteKey(exchange, symbol));
+            if (hash.isEmpty()) {
+                return Optional.empty();
+            }
+            return Optional.of(new PriceQuote(exchange, symbol,
+                    new BigDecimal((String) hash.get("price")),
+                    Instant.ofEpochMilli(Long.parseLong((String) hash.get("tradedAt")))));
+        });
     }
 
     @Override
     public void saveFxRate(FxRate rate) {
-        redis.execute(SAVE_IF_NEWER, List.of(FX_KEY),
-                "publishedAt", millis(rate.publishedAt()), "rate", rate.rate().toPlainString());
+        call(() -> redis.execute(SAVE_IF_NEWER, List.of(FX_KEY),
+                "publishedAt", millis(rate.publishedAt()), "rate", rate.rate().toPlainString()));
     }
 
     @Override
     public Optional<FxRate> findFxRate() {
-        Map<Object, Object> hash = redis.opsForHash().entries(FX_KEY);
-        if (hash.isEmpty()) {
-            return Optional.empty();
+        return call(() -> {
+            Map<Object, Object> hash = redis.opsForHash().entries(FX_KEY);
+            if (hash.isEmpty()) {
+                return Optional.empty();
+            }
+            return Optional.of(new FxRate(
+                    new BigDecimal((String) hash.get("rate")),
+                    Instant.ofEpochMilli(Long.parseLong((String) hash.get("publishedAt")))));
+        });
+    }
+
+    /** Valkey 예외(연결 실패·시간 초과)를 서비스가 아는 예외로 바꾼다 */
+    private static <T> T call(Supplier<T> action) {
+        try {
+            return action.get();
+        } catch (DataAccessException e) {
+            throw new MarketDataUnavailableException("market data store unavailable: " + e.getClass().getSimpleName(), e);
         }
-        return Optional.of(new FxRate(
-                new BigDecimal((String) hash.get("rate")),
-                Instant.ofEpochMilli(Long.parseLong((String) hash.get("publishedAt")))));
     }
 
     private static String quoteKey(String exchange, String symbol) {

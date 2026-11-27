@@ -28,6 +28,7 @@ dependencies {
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.mariadb)
     testImplementation(libs.testcontainers.kafka)
+    testImplementation(libs.testcontainers.toxiproxy)
 
     testImplementation(libs.archunit)
 }

@@ -14,7 +14,8 @@ public enum ErrorCode {
     INVALID_RANGE(HttpStatus.BAD_REQUEST),
     INVALID_PARAMETER(HttpStatus.BAD_REQUEST),
     UNSUPPORTED_SYMBOL(HttpStatus.NOT_FOUND),
-    MARKET_DATA_NOT_READY(HttpStatus.SERVICE_UNAVAILABLE);
+    MARKET_DATA_NOT_READY(HttpStatus.SERVICE_UNAVAILABLE),
+    MARKET_DATA_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE);   // 시세 저장소 일시 장애
 
     private final HttpStatus status;
 
