@@ -5,6 +5,7 @@ import com.uni.coinpremium.premium.application.service.PremiumSnapshot;
 import com.uni.coinpremium.premium.domain.FxRate;
 import com.uni.coinpremium.premium.domain.KimchiPremium;
 import com.uni.coinpremium.premium.domain.PriceQuote;
+import com.uni.coinpremium.premium.domain.SnapshotSource;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,14 +51,14 @@ class JooqPremiumSnapshotRepositoryTest {
     @Test
     @DisplayName("같은 코인·같은 시점은 한 번만 저장된다")
     void ignoreDuplicate() {
-        assertTrue(repository.save(snapshot("BTC"), NOW));  // 처음: 저장
-        assertFalse(repository.save(snapshot("BTC"), NOW)); // 두 번째: 무시
+        assertTrue(repository.save(snapshot("BTC"), NOW, SnapshotSource.LIVE));  // 처음: 저장
+        assertFalse(repository.save(snapshot("BTC"), NOW, SnapshotSource.LIVE)); // 두 번째: 무시
     }
 
     @Test
     @DisplayName("시각은 UTC 기준으로 저장된다")
     void storeInUtc() {
-        repository.save((snapshot("ETH")), NOW);
+        repository.save(snapshot("ETH"), NOW, SnapshotSource.LIVE);
 
         // 유일 키(symbol + captured_at)로 조회 → 최대 1개 보장
         // UTC로 저장됐다면 05:01로 찾아져야 함 (KST로 저장됐다면 14:01이라 못 찾음)
@@ -68,5 +69,19 @@ class JooqPremiumSnapshotRepositoryTest {
                 .fetchOne(PREMIUM_SNAPSHOT.CAPTURED_AT);
 
         assertNotNull(stored);
+    }
+
+    @Test
+    @DisplayName("같은 시점에 LIVE가 있으면 BACKFILL은 저장되지 않는다 (실시간 값 우선)")
+    void liveWinsOverBackfill() {
+        assertTrue(repository.save(snapshot("BTC"), NOW, SnapshotSource.LIVE));
+        assertFalse(repository.save(snapshot("BTC"), NOW, SnapshotSource.BACKFILL));
+
+        // 남아 있는 줄은 여전히 LIVE
+        String source = dsl.select(PREMIUM_SNAPSHOT.SOURCE)
+                .from(PREMIUM_SNAPSHOT)
+                .where(PREMIUM_SNAPSHOT.SYMBOL.eq("BTC"))
+                .fetchOne(PREMIUM_SNAPSHOT.SOURCE);
+        assertEquals("LIVE", source);
     }
 }

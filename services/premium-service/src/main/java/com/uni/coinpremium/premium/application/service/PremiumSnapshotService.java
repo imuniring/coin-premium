@@ -3,6 +3,7 @@ package com.uni.coinpremium.premium.application.service;
 import com.uni.coinpremium.premium.application.exception.MarketDataNotReadyException;
 import com.uni.coinpremium.premium.application.port.out.PremiumSnapshotRepository;
 import com.uni.coinpremium.premium.application.port.out.SupportedCoins;
+import com.uni.coinpremium.premium.domain.SnapshotSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -57,7 +58,7 @@ public class PremiumSnapshotService {
                             .log("[snapshot] 시세가 오래돼 건너뜀 (공백 보정 대상) - symbol={}", symbol);
                     return;
                 }
-                boolean saved = repository.save(snapshot, capturedAt);
+                boolean saved = repository.save(snapshot, capturedAt, SnapshotSource.LIVE);
                 if (saved) {
                     log.info("[snapshot] 저장 - symbol={}, capturedAt={}", symbol, capturedAt);
                 } else {
