@@ -43,3 +43,6 @@ premium:
     upbit-url: https://api.upbit.com
     binance-url: https://data-api.binance.vision   # 시세 전용 공개 주소 (확인 필요: 안 되면 https://api.binance.com)
     timeout: 5s
+  last-known:
+    initial-delay: 5s       # 기동 직후 기억이 빈 구간 (Valkey 장애 시 503 가능 구간)
+    refresh-interval: 30s   # 인스턴스별 마지막 김프 갱신 주기 (ShedLock 없음)

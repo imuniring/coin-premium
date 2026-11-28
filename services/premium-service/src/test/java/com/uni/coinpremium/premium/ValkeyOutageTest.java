@@ -31,7 +31,11 @@ import org.springframework.context.annotation.Import;
  */
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "premium.backfill.cron=-"   // 이 테스트에선 공백 보정 스케줄러 끄기 (Spring cron "-" = 비활성)
+        properties = {
+                "premium.backfill.cron=-",                  // 공백 보정 스케줄러 끄기
+                "premium.last-known.initial-delay=PT0S",    // 기억 갱신은 바로 시작
+                "premium.last-known.refresh-interval=PT1S"  // 테스트에선 1초마다
+        }
 )
 @Import(TestcontainersConfig.class)
 class ValkeyOutageTest {
@@ -51,12 +55,13 @@ class ValkeyOutageTest {
 
     @BeforeEach
     void ready() throws Exception {
-        // 신선한 시세·환율을 넣고, 한 번 정상 조회해 둔다 (장애 전 상태)
+        // 신선한 시세·환율만 넣고 API는 부르지 않는다
+        // → 기억은 갱신 스케줄러(1초 주기)가 채워야 함 (다중 인스턴스에서 API 호출이 없는 인스턴스와 같은 상황)
         Instant now = Instant.now();
         marketData.saveQuote(new PriceQuote("UPBIT", "BTC", new BigDecimal("107000000"), now));
         marketData.saveQuote(new PriceQuote("BINANCE", "BTC", new BigDecimal("79500"), now));
         marketData.saveFxRate(new FxRate(new BigDecimal("1340"), now));
-        assertThat(getPremium().statusCode()).isEqualTo(200);
+        Thread.sleep(1500);   // 갱신 주기(1초)보다 조금 길게
     }
 
     @AfterEach
